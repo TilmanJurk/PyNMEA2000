@@ -1,9 +1,11 @@
+from collections import deque
+
 import can
-from typing import Optional, List, Callable, Set
+from typing import Optional, List, Callable, Set, Deque
 
 from n2k import DeviceList
 from n2k.can_message_buffer import N2kCANMessageBuffer
-from n2k.can_tools import can_id_to_n2k
+from n2k.can_tools import can_id_to_n2k, n2k_id_to_can
 from n2k.device_information import DeviceInformation
 from n2k.message import Message
 from n2k.message_handler import MessageHandler
@@ -34,6 +36,21 @@ N2K_MESSAGE_GROUPS: int = 2
 N2K_MAX_CAN_BUS_ADDRESS: int = 251
 N2K_NULL_CAN_BUS_ADDRESS: int = 254
 N2K_BROADCAST_CAN_BUS_ADDRESS: int = 255
+
+N2K_ADDRESS_CLAIM_TIMEOUT = 250
+MAX_HEARTBEAT_INTERVAL = 655320
+
+TP_MAX_FRAMES = 5  # Maximum amount of Frames that can be received at a single time # TODO: why?
+TP_CM_BAM = 32
+TP_CM_RTS = 16
+TP_CM_CTS = 17
+TP_CM_ACK = 19
+TP_CM_Abort = 255
+
+TP_CM_AbortBusy = 1
+TP_CM_AbortNoResources = 2
+TP_CM_AbortTimeout = 3
+
 
 
 class Node(can.Listener):
@@ -70,7 +87,7 @@ class Node(can.Listener):
     receive_messages: List[int]
 
     max_pgn_sequence_counters: int = 0  # size_t
-    pgn_sequence_counters: int = 0  # unsigned long | array pointer?
+    pgn_sequence_counters: List[int] = None  # unsigned long | array pointer?
 
     # ISO Multi Packet Support
     # pending_tp_msg: N2kMessage
@@ -131,10 +148,11 @@ class Node(can.Listener):
     def __init__(self, bus: can.BusABC, can_msg_buffer_size=20):
         super().__init__()
         self.bus = bus
-        self.device_list = DeviceList()
+        self.device_list = DeviceList(self)
         self.message_handlers = set()
         self.message_handlers.add(self.device_list)
         self.can_msg_buffer = N2kCANMessageBuffer(can_msg_buffer_size)
+        self._can_send_frame_buf = deque()
         
         self.transmit_messages = DefaultTransmitMessages[:]
         self.receive_messages = DefaultReceiveMessages[:]
@@ -301,8 +319,8 @@ class Node(can.Listener):
     _n2k_can_msg_buf: List[Message] # TODO: init if we keep it
     _max_n2k_can_msgs: int  # uint8_t
 
-    _can_send_frame_buf: List[CANSendFrame] # TODO: init if we keep it
-    _max_can_send_frames: int  # uint16_t
+    _can_send_frame_buf: Deque[can.message.Message]
+    _max_can_send_frames: int = 40
     _can_send_frame_buffer_write: int  # uint16_t
     _can_send_frame_buffer_read: int  # uint16_t
     _max_can_receive_frames: int  # uint16_t
@@ -313,12 +331,29 @@ class Node(can.Listener):
 
     # TODO: Message Handler for group functions
 
-    # Helpers? TODO: what are these functions used for?
     def _send_frames(self) -> bool:
-        print("NotImplemented _send_frames")
+        while len(self._can_send_frame_buf) > 0:
+            can_msg = self._can_send_frame_buf.popleft()
+            if not self._send_frame(can_msg.arbitration_id, can_msg.dlc, can_msg.data):
+                return False
+        return True
 
-    def _send_frame(self, frame_id: int, length: int, buf: bytearray, wait_sent: bool = True) -> bool:
-        print("NotImplemented _send_frame")
+    def _send_frame(self, frame_id: int, length: int, buf: bytearray) -> bool:
+        if not self._send_frames():
+            return False
+        
+        can_msg = can.message.Message(arbitration_id=frame_id, data=buf, dlc=length)
+        try:
+            self.bus.send(can_msg)
+        except can.CanOperationError:
+            if len(self._can_send_frame_buf) < self._max_can_send_frames:
+                # Todo: log that we buffered the message
+                self._can_send_frame_buf.append(can_msg)
+            else:
+                # Todo: log that we failed to send frame and couldn't even store it on the buffer to be retried
+                pass
+            return False
+        return True
 
     def _get_next_free_can_send_frame(self) -> CANSendFrame:
         print("NotImplemented _get_next_free_can_send_frame")
@@ -338,10 +373,15 @@ class Node(can.Listener):
         print("NotImplemented _set_n2k_can_buf_msg")
 
     def _is_fast_packet_pgn(self, pgn: int) -> bool:
-        print("NotImplemented _is_fast_packet_pgn")
+        return is_fast_packet_system_message(pgn) or is_mandatory_fast_packet_message(pgn) or \
+               is_default_fast_packet_message(pgn) or is_proprietary_fast_packet_message(pgn) or \
+               (self.custom_fast_packet_messages is not None and pgn in self.custom_fast_packet_messages)
 
-    def _is_fast_packet(self, n2k_msg: Message) -> bool:
-        print("NotImplemented _is_fast_packet")
+    def _is_fast_packet(self, msg: Message) -> bool:
+        if msg.priority >= 0x80:
+            # Special handling for force to send message as single frame # TODO: force?
+            return False
+        return self._is_fast_packet_pgn(msg.pgn)
 
     def _check_known_message(self, pgn: int) -> (bool, bool, bool):
         # TODO: refactor
@@ -398,7 +438,14 @@ class Node(can.Listener):
         print("NotImplemented _start_address_claim")
 
     def _is_address_claim_started(self) -> bool:
-        print("NotImplemented _is_address_claim_started")
+        if self.address_claim_started != 0 and \
+                self.address_claim_started + N2K_ADDRESS_CLAIM_TIMEOUT < millis():
+            self.address_claim_started = 0
+            # We have claimed our address. Save end source for next possible claim run.
+            # TODO: why do it here? assuming to allow for contest of source address? where is contest handled?
+            self.update_address_claim_end_source()
+            
+        return self.address_claim_started != 0
 
     def _handle_iso_address_claim(self, msg: Message) -> None:
         print("NotImplemented _handle_iso_address_claim")
@@ -413,10 +460,28 @@ class Node(can.Listener):
         print("NotImplemented _is_my_source")
 
     def _get_sequence_counter(self, pgn: int):
-        print("NotImplemented _get_sequence_counter")
+        if self.pgn_sequence_counters is None:
+            # One sequence counter per outbound fast packet PGN plus one for undefined PGNs
+            self.max_pgn_sequence_counters = self._get_fast_packet_tx_pgn_count() + 1
+            self.pgn_sequence_counters = []
+        
+        for i in range(len(self.pgn_sequence_counters)):
+            if self.pgn_sequence_counters[i] & 0x00ffffff == pgn:
+                # found our counter
+                value = self.pgn_sequence_counters[i] >> 24 + 1
+                if value > 7:
+                    value = 0
+                self.pgn_sequence_counters[i] = pgn | (value << 24)
+                return value
+        self.pgn_sequence_counters.append(pgn)
+        return 0
 
     def _get_fast_packet_tx_pgn_count(self) -> int:
-        print("NotImplemented _get_fast_packet_tx_pgn_count")
+        counter = 0
+        for pgn in self.transmit_messages:
+            if self._is_fast_packet_pgn(pgn):
+                counter += 1
+        return counter
 
     # Forward Handling Code Skipped
 
@@ -548,7 +613,50 @@ class Node(can.Listener):
 
     # Send message to the bus
     def send_msg(self, msg: Message) -> bool:
-        print("NotImplemented send_msg")
+        result = False
+        
+        msg.check_destination()
+        msg.source = self.n2k_source
+        
+        if msg.source > N2K_MAX_CAN_BUS_ADDRESS and msg.pgn != PGN.IsoAddressClaim:
+            # CAN bus address range is 0-251. Allow ISO Address claim messages nevertheless. TODO: why?
+            return False
+        
+        can_id = n2k_id_to_can(priority=msg.priority, pgn=msg.pgn, source=msg.source, destination=msg.destination)
+        
+        if can_id is None or msg.pgn == 0:
+            return False
+        
+        if self._is_address_claim_started() and msg.pgn != PGN.IsoAddressClaim:
+            return False
+        
+        if msg.data_len <= 8 and self._is_fast_packet(msg):
+            # Can be sent as a single packet
+            result = self._send_frame(can_id, msg.data_len, msg.data)
+        else:
+            # Has to be sent as fast packet in multiple frames
+            # if msg.tp_message:  # TODO: iso multi packet support
+            #     result = self.start_send_tp_message(msg)
+            # else:
+            frames: int = ((msg.data_len-6-1) // 7)+1+1 if msg.data_len > 6 else 1
+            order = self._get_sequence_counter(msg.pgn) << 5  # TODO: what is this good for?? gives us 3 bit for the front
+            result = True
+            cur = 2
+            for i in range(frames):
+                buf = bytearray(i | order)
+                if i == 0:
+                    buf.extend(msg.data[cur:cur+6])
+                    cur += 6
+                else:
+                    buf.extend(msg.data[cur:cur+7])
+                    cur += 7
+                    while len(buf) < 8:
+                        buf.append(0xff)
+                result = self._send_frame(can_id, 8, buf)
+                if not result:
+                    break
+        
+        return result
 
     def attach_msg_handler(self, msg_handler: MessageHandler) -> None:
         self.message_handlers.add(msg_handler)

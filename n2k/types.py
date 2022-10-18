@@ -25,7 +25,6 @@ class CANSendFrame(NamedTuple):
     id: int  # unsigned long
     length: int  # unsigned char
     buffer: bytearray  # 8 bit max
-    wait_sent: bool
 
 
 class N2kNavigationDirection(IntEnum):

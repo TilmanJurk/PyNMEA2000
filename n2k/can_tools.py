@@ -1,6 +1,6 @@
 # convert can message to usable format somehow
 # e.g. by converting id
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 
 class MsgHeader(NamedTuple):
@@ -30,7 +30,7 @@ def can_id_to_n2k(can_id: int) -> MsgHeader:
     return MsgHeader(source=src, priority=prio, destination=dst, pgn=pgn)
 
 
-def n2k_id_to_can(priority: int, pgn: int, source: int, destination: int) -> int:
+def n2k_id_to_can(priority: int, pgn: int, source: int, destination: int) -> Optional[int]:
     priority = priority & 0xff
     pgn = pgn & 0xffffffff
     source = source & 0xffffffff
@@ -42,7 +42,7 @@ def n2k_id_to_can(priority: int, pgn: int, source: int, destination: int) -> int
         # PDU1 format
         if pgn & 0xff != 0:
             # for PDU1 format, the lowest byte of the PGN has to be 0, to leave space for the destination
-            return 0
+            return None
         return (priority & 0x7) << 26 | pgn << 8 | destination << 8 | source
     else:
         # PDU2 format
