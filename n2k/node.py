@@ -8,9 +8,10 @@ from n2k.device_information import DeviceInformation
 from n2k.message import Message
 from n2k.message_handler import MessageHandler
 from n2k.can_message import N2kCANMessage
+from n2k.messages import set_n2k_iso_address_claim
 from n2k.n2k import is_fast_packet_first_frame, DefaultTransmitMessages, DefaultReceiveMessages, \
     is_default_single_frame_message, is_mandatory_fast_packet_message, is_default_fast_packet_message, \
-    is_fast_packet_system_message, is_single_frame_system_message
+    is_fast_packet_system_message, is_single_frame_system_message, is_proprietary_fast_packet_message, PGN
 from n2k.types import ProductInformation, CANSendFrame, ConfigurationInformation
 from n2k.utils import millis
 
@@ -373,6 +374,8 @@ class Node(can.Listener):
         if fast_packet:
             return True, system_message, fast_packet
         
+        fast_packet = is_proprietary_fast_packet_message()
+        
         return False, system_message, fast_packet
 
     def _handle_received_system_message(self, msg: N2kCANMessage) -> bool:
@@ -504,7 +507,22 @@ class Node(can.Listener):
     # void ExtendReceiveMessages(const unsigned long *_FastPacketMessages, int iDev=0);
 
     def send_iso_address_claim(self, destination: int = 0xff, delay: int = 0) -> None:
-        print("NotImplemented send_iso_address_claim")
+        """
+        Some Devices (Garmin) constantly request information about others on the network.
+        Thus, we need to re-send our address claim, or they will stop detecting us.
+        :param destination:
+        :param delay:
+        :return:
+        """
+        
+        if delay > 0:
+            self.set_pending_iso_address_claim(delay)
+            return
+            
+        msg = Message(self.n2k_source)
+        msg.destination = destination
+        set_n2k_iso_address_claim(msg, self.device_information.name)
+        self.send_msg(msg)
 
     # ISO Multi Packet Support
     # bool SendProductInformation(unsigned char Destination, int DeviceIndex, bool UseTP);

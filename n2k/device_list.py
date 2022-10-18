@@ -21,11 +21,11 @@ class DeviceList(MessageHandler):
     list_updated: bool
     has_pending_requests: bool
     
-    def __init__(self):
+    def __init__(self, node: 'n2k.node.Node'):
         """
         Initialize Device List
         """
-        super().__init__(0)
+        super().__init__(0, node)
         self.sources = [None] * N2K_MAX_BUS_DEVICES
         self.max_devices = 0
         self.list_updated = False
@@ -336,8 +336,9 @@ class DeviceList(MessageHandler):
         :param source: Address of NMEA2000 Device.
         :return: Whether message was sent successfully.
         """
-        # TODO
-        print("NotImplemented _request_iso_address_claim")
+        msg = Message()
+        n2k.messages.set_n2k_pgn_iso_request(msg, source, PGN.IsoAddressClaim)
+        return self.__node.send_msg(msg)
     
     def _add_device(self, source: int) -> None:
         # request iso address claim from device. If message is sent call save device with a new device
