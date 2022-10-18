@@ -3,7 +3,7 @@ import n2k
 
 
 class MessageHandler:
-    __node: 'n2k.Node'
+    _node: 'n2k.Node'
     pgn: int
 
     # def handle_msg(self, n2k_node: N2kNode, msg: N2kMessage) -> None:
@@ -11,7 +11,7 @@ class MessageHandler:
         print("NotImplemented handle_msg")
 
     def __init__(self, pgn: int, node: 'n2k.Node'):
-        self.__node = node
+        self._node = node
         self.pgn = pgn
 
     # TODO how is dropping & unregistering of the handler done?

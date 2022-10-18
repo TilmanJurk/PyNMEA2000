@@ -338,7 +338,7 @@ class DeviceList(MessageHandler):
         """
         msg = Message()
         n2k.messages.set_n2k_pgn_iso_request(msg, source, PGN.IsoAddressClaim)
-        return self.__node.send_msg(msg)
+        return self._node.send_msg(msg)
     
     def _add_device(self, source: int) -> None:
         # request iso address claim from device. If message is sent call save device with a new device
