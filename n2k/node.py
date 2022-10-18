@@ -314,33 +314,33 @@ class Node(can.Listener):
 
     # Helpers? TODO: what are these functions used for?
     def _send_frames(self) -> bool:
-        raise NotImplementedError()
+        print("NotImplemented _send_frames")
 
     def _send_frame(self, frame_id: int, length: int, buf: bytearray, wait_sent: bool = True) -> bool:
-        raise NotImplementedError()
+        print("NotImplemented _send_frame")
 
     def _get_next_free_can_send_frame(self) -> CANSendFrame:
-        raise NotImplementedError()
+        print("NotImplemented _get_next_free_can_send_frame")
 
     def _send_pending_information(self) -> None:
-        raise NotImplementedError()
+        print("NotImplemented _send_pending_information")
 
     def _is_initialized(self) -> bool:
-        raise NotImplementedError()
+        print("NotImplemented _is_initialized")
 
     # ISO Multi Packet Support
     # def _find_free_can_msg_index(self, pgn: int, source: int, destination: int, tp_msg: bool, msg_index: int) -> None:
     def _find_free_can_msg_index(self, pgn: int, source: int, destination: int, msg_index: int) -> None:
-        raise NotImplementedError()
+        print("NotImplemented _find_free_can_msg_index")
 
     def _set_n2k_can_buf_msg(self, can_id: int, length: int, buf: bytearray):
-        raise NotImplementedError()
+        print("NotImplemented _set_n2k_can_buf_msg")
 
     def _is_fast_packet_pgn(self, pgn: int) -> bool:
-        raise NotImplementedError()
+        print("NotImplemented _is_fast_packet_pgn")
 
     def _is_fast_packet(self, n2k_msg: Message) -> bool:
-        raise NotImplementedError()
+        print("NotImplemented _is_fast_packet")
 
     def _check_known_message(self, pgn: int) -> (bool, bool, bool):
         # TODO: refactor
@@ -376,13 +376,13 @@ class Node(can.Listener):
         return False, system_message, fast_packet
 
     def _handle_received_system_message(self, msg: N2kCANMessage) -> bool:
-        raise NotImplementedError()
+        print("NotImplemented _handle_received_system_message")
 
     def _respond_iso_request(self, msg: Message, requested_pgn: int) -> None:
-        raise NotImplementedError()
+        print("NotImplemented _respond_iso_request")
 
     def _handle_iso_request(self, msg: Message) -> None:
-        raise NotImplementedError()
+        print("NotImplemented _handle_iso_request")
 
     #  TOOD
     # def _respond_group_function(self, msg: N2kMessage, group_function_code: GroupFunctionCode, pgn_for_group_function: int) -> None:
@@ -392,33 +392,33 @@ class Node(can.Listener):
     #    raise NotImplementedError()
 
     def _start_address_claim(self) -> None:
-        raise NotImplementedError()
+        print("NotImplemented _start_address_claim")
 
     def _is_address_claim_started(self) -> bool:
-        raise NotImplementedError()
+        print("NotImplemented _is_address_claim_started")
 
     def _handle_iso_address_claim(self, msg: Message) -> None:
-        raise NotImplementedError()
+        print("NotImplemented _handle_iso_address_claim")
 
     def _handle_commanded_address(self, msg: Message) -> None:
-        raise NotImplementedError()
+        print("NotImplemented _handle_commanded_address")
 
     def _get_next_address(self, restart_at_end: bool = False):
-        raise NotImplementedError()
+        print("NotImplemented _get_next_address")
 
     def _is_my_source(self, source: int) -> bool:
-        raise NotImplementedError()
+        print("NotImplemented _is_my_source")
 
     def _get_sequence_counter(self, pgn: int):
-        raise NotImplementedError()
+        print("NotImplemented _get_sequence_counter")
 
     def _get_fast_packet_tx_pgn_count(self) -> int:
-        raise NotImplementedError()
+        print("NotImplemented _get_fast_packet_tx_pgn_count")
 
     # Forward Handling Code Skipped
 
     def _run_message_handlers(self, msg: Message) -> None:
-        raise NotImplementedError()
+        print("NotImplemented _run_message_handlers")
 
     # ISO Multi Packet Support
     # def _test_handle_tp_message(self, pgn: int, source: int, destination: int) -> bool:
@@ -504,7 +504,7 @@ class Node(can.Listener):
     # void ExtendReceiveMessages(const unsigned long *_FastPacketMessages, int iDev=0);
 
     def send_iso_address_claim(self, destination: int = 0xff, delay: int = 0) -> None:
-        raise NotImplementedError()
+        print("NotImplemented send_iso_address_claim")
 
     # ISO Multi Packet Support
     # bool SendProductInformation(unsigned char Destination, int DeviceIndex, bool UseTP);
@@ -513,24 +513,24 @@ class Node(can.Listener):
     # void SendRxPGNList(unsigned char Destination, int DeviceIndex, bool UseTP=false);
 
     def send_tx_pgn_list(self, destination: int) -> None:
-        raise NotImplementedError()
+        print("NotImplemented send_tx_pgn_list")
 
     def send_rx_pgn_list(self, destination: int) -> None:
-        raise NotImplementedError()
+        print("NotImplemented send_rx_pgn_list")
 
     def send_product_information(self) -> bool:
-        raise NotImplementedError()
+        print("NotImplemented send_product_information")
 
     def send_configuration_information(self) -> bool:
-        raise NotImplementedError()
+        print("NotImplemented send_configuration_information")
 
     # Heartbeat Support
     def send_heartbeat(self, force: bool = False):
-        raise NotImplementedError()
+        print("NotImplemented send_heartbeat")
 
     # Send message to the bus
     def send_msg(self, msg: Message) -> bool:
-        raise NotImplementedError()
+        print("NotImplemented send_msg")
 
     def attach_msg_handler(self, msg_handler: MessageHandler) -> None:
         self.message_handlers.add(msg_handler)

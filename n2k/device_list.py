@@ -307,7 +307,7 @@ class DeviceList(MessageHandler):
         :return: Whether message was sent successfully.
         """
         # TODO
-        raise NotImplementedError()
+        print("NotImplemented _request_product_information")
     
     def _request_configuration_information(self, source: int) -> bool:
         """
@@ -317,7 +317,7 @@ class DeviceList(MessageHandler):
         :return: Whether message was sent successfully.
         """
         # TODO
-        raise NotImplementedError()
+        print("NotImplemented, _request_configuration_information")
     
     def _request_supported_pgn_list(self, source: int) -> bool:
         """
@@ -327,7 +327,7 @@ class DeviceList(MessageHandler):
         :return: Whether message was sent successfully.
         """
         # TODO
-        raise NotImplementedError()
+        print("NotImplemented, _request_supported_pgn_list")
     
     def _request_iso_address_claim(self, source: int) -> bool:
         """
@@ -337,7 +337,7 @@ class DeviceList(MessageHandler):
         :return: Whether message was sent successfully.
         """
         # TODO
-        raise NotImplementedError()
+        print("NotImplemented _request_iso_address_claim")
     
     def _add_device(self, source: int) -> None:
         # request iso address claim from device. If message is sent call save device with a new device

@@ -7,7 +7,7 @@ class MessageHandler:
 
     # def handle_msg(self, n2k_node: N2kNode, msg: N2kMessage) -> None:
     def handle_msg(self, msg: Message) -> None:
-        raise NotImplementedError()
+        print("NotImplemented handle_msg")
 
     def __init__(self, pgn: int) -> 'MessageHandler':
         self.pgn = pgn

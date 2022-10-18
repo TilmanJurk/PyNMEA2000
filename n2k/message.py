@@ -107,128 +107,128 @@ class Message:
     
     # Data Insertion
     def add_float(self, v: float, undef_val: float = N2K_FLOAT_NAN) -> None:
-        raise NotImplementedError()
+        print("NotImplemented add_float")
     
     def add_1_byte_double(self, v: float, precision: float, undef_val: float = N2K_DOUBLE_NAN) -> None:
-        raise NotImplementedError()
+        print("NotImplemented add_1_byte_double")
     
     def add_2_byte_udouble(self, v: float, precision: float, undef_val: float = N2K_DOUBLE_NAN) -> None:
-        raise NotImplementedError()
+        print("NotImplemented add_2_byte_udouble")
     
     def add_2_byte_double(self, v: float, precision: float, undef_val: float = N2K_DOUBLE_NAN) -> None:
-        raise NotImplementedError()
+        print("NotImplemented add_2_byte_double")
 
     def add_3_byte_double(self, v: float, precision: float, undef_val: float = N2K_DOUBLE_NAN) -> None:
-        raise NotImplementedError()
+        print("NotImplemented add_3_byte_double")
 
     def add_4_byte_udouble(self, v: float, precision: float, undef_val: float = N2K_DOUBLE_NAN) -> None:
-        raise NotImplementedError()
+        print("NotImplemented add_4_byte_udouble")
     
     def add_4_byte_double(self, v: float, precision: float, undef_val: float = N2K_DOUBLE_NAN) -> None:
-        raise NotImplementedError()
+        print("NotImplemented add_4_byte_double")
     
     def add_8_byte_double(self, v: float, precision: float, undef_val: float = N2K_DOUBLE_NAN) -> None:
-        raise NotImplementedError()
+        print("NotImplemented add_8_byte_double")
     
     def add_byte(self, v: int) -> None:
-        raise NotImplementedError()
+        print("NotImplemented add_byte")
     
     def add_2_byte_uint(self, v: int) -> None:
-        raise NotImplementedError()
+        print("NotImplemented add_2_byte_uint")
     
     def add_2_byte_int(self, v: int) -> None:
-        raise NotImplementedError()
+        print("NotImplemented add_2_byte_int")
     
     def add_3_byte_int(self, v: int) -> None:
-        raise NotImplementedError()
+        print("NotImplemented add_3_byte_int")
     
     def add_4_byte_uint(self, v: int) -> None:
-        raise NotImplementedError()
+        print("NotImplemented add_4_byte_uint")
     
     def add_uint_64(self, v: int) -> None:
-        raise NotImplementedError()
+        print("NotImplemented add_uint_64")
     
     def add_str(self, v: str) -> None:
-        raise NotImplementedError()
+        print("NotImplemented add_str")
     
     def add_var_str(self, v: str) -> None:
-        raise NotImplementedError()
+        print("NotImplemented add_var_str")
     
     def add_buf(self, v: bytearray) -> None:
-        raise NotImplementedError()
+        print("NotImplemented add_buf")
     
     # Data Retrieval
     def get_float(self, index: IntRef, default: float = N2K_FLOAT_NAN) -> float:
-        raise NotImplementedError()
+        print("NotImplemented get_float")
     
     def get_1_byte_double(self, precision: float, index: IntRef, default: float = N2K_DOUBLE_NAN) -> float:
-        raise NotImplementedError()
+        print("NotImplemented get_1_byte_double")
     
     def get_1_byte_udouble(self, precision: float, index: IntRef, default: float = N2K_DOUBLE_NAN) -> float:
-        raise NotImplementedError()
+        print("NotImplemented get_1_byte_udouble")
     
     def get_2_byte_double(self, precision: float, index: IntRef, default: float = N2K_DOUBLE_NAN) -> float:
-        raise NotImplementedError()
+        print("NotImplemented get_2_byte_double")
     
     def get_2_byte_udouble(self, precision: float, index: IntRef, default: float = N2K_DOUBLE_NAN) -> float:
-        raise NotImplementedError()
+        print("NotImplemented get_2_byte_udouble")
     
     def get_3_byte_double(self, precision: float, index: IntRef, default: float = N2K_DOUBLE_NAN) -> float:
-        raise NotImplementedError()
+        print("NotImplemented get_3_byte_double")
     
     def get_4_byte_double(self, precision: float, index: IntRef, default: float = N2K_DOUBLE_NAN) -> float:
-        raise NotImplementedError()
+        print("NotImplemented get_4_byte_double")
     
     def get_4_byte_udouble(self, precision: float, index: IntRef, default: float = N2K_DOUBLE_NAN) -> float:
-        raise NotImplementedError()
+        print("NotImplemented get_4_byte_udouble")
     
     def get_8_byte_double(self, precision: float, index: IntRef, default: float = N2K_DOUBLE_NAN) -> float:
-        raise NotImplementedError()
+        print("NotImplemented get_8_byte_double")
     
     def get_byte(self, index: IntRef) -> int:
-        raise NotImplementedError()
+        print("NotImplemented get_byte")
     
     def get_2_byte_int(self, index: IntRef, default: int = N2K_INT16_NA) -> int:
-        raise NotImplementedError()
+        print("NotImplemented get_2_byte_int")
     
     def get_2_byte_uint(self, index: IntRef, default: int = N2K_UINT16_NA) -> int:
-        raise NotImplementedError()
+        print("NotImplemented get_2_byte_uint")
     
     def get_3_byte_uint(self, index: IntRef, default: int = N2K_UINT32_NA) -> int:
-        raise NotImplementedError()
+        print("NotImplemented get_3_byte_uint")
     
     def get_4_byte_uint(self, index: IntRef, default: int = N2K_UINT32_NA) -> int:
-        raise NotImplementedError()
+        print("NotImplemented get_4_byte_uint")
     
     def get_uint_64(self, index: IntRef, default: int = N2K_UINT64_NA) -> int:
-        raise NotImplementedError()
+        print("NotImplemented get_uint_64")
     
     def get_str(self, length: int, index: IntRef) -> str:
-        raise NotImplementedError()
+        print("NotImplemented get_str")
     
     # TODO: second get_str version that writes into a provided buffer of a certain length and either terminates when
     #  the buffer is full or the length of the input has been reached and then fills the rest of the buffer with zeros.
     #  Instead of checking for '@' as the end of string char it checks for the provided char.
     
     def get_var_str(self, index: IntRef) -> str:
-        raise NotImplementedError()
+        print("NotImplemented get_var_str")
     
     def get_buf(self, length: int, index: IntRef) -> bytearray:
-        raise NotImplementedError()
+        print("NotImplemented get_buf")
     
     # Data Manipulation
     def set_byte(self, v: int, index: IntRef) -> bool:
-        raise NotImplementedError()
+        print("NotImplemented set_byte")
     
     def set_2_byte_uint(self, v: int, index: IntRef) -> bool:
-        raise NotImplementedError()
+        print("NotImplemented set_2_byte_uint")
     
     # Send message?
     def print(self, port: Stream, no_data: bool = False) -> None:
-        raise NotImplementedError()
+        print("NotImplemented print")
     
     def send_in_actisense_format(self, port: Stream) -> None:
-        raise NotImplementedError()
+        print("NotImplemented send_in_actisense_format")
     
 
 # TODO: change all the set functions to instead subclass n2kmessage and be the constructor of the
@@ -236,4 +236,4 @@ class Message:
 #  Or maybe just be class functions? Or static functions that return a message (probably best)
 
 def print_buf(port: Stream, length: int, p_data: str, add_lf: bool = False):
-    raise NotImplementedError()
+    print("NotImplemented print_buf")

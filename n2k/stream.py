@@ -28,7 +28,7 @@ class Stream:
         raise NotImplementedError()
     
     def println(self, s: str) -> int:
-        raise NotImplementedError()
+        print("NotImplemented println")
     
     def print_val(self, val: int, radix: int = 10) -> int:
         """
@@ -41,4 +41,4 @@ class Stream:
         raise NotImplementedError()
     
     def println_val(self, val: int, radix: int = 10) -> int:
-        raise NotImplementedError()
+        print("NotImplemented println_val")

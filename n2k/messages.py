@@ -128,7 +128,7 @@ def set_n2k_system_time(sid: int, system_date: int, system_time: float,
     :param time_source: Time source, see :py:class:`n2k_types.N2kTimeSource`
     :return: NMEA2000 message ready to be sent.
     """
-    raise NotImplementedError()
+    print("NotImplemented set_n2k_system_time")
 
 
 class SystemTime(NamedTuple):
@@ -145,7 +145,7 @@ def parse_n2k_system_time(msg: Message) -> SystemTime:
     :param msg: NMEA2000 Message with PGN 126992
     :return: Dictionary containing the parsed information.
     """
-    raise NotImplementedError()
+    print("NotImplemented parse_n2k_system_time")
 
 
 # AIS Safety Related Broadcast Message (PGN 129802)
@@ -163,7 +163,7 @@ def set_n2k_ais_related_broadcast_msg(message_id: int, repeat: N2kAISRepeat, sou
     :param safety_related_text: Maximum 121 bytes. Encoded as 6-bit ASCII
     :return: NMEA2000 message ready to be sent.
     """
-    raise NotImplementedError()
+    print("NotImplemented, set_n2k_ais_related_broadcast_msg")
 
 
 class AISSafetyRelatedBroadcast(NamedTuple):
@@ -181,7 +181,7 @@ def parse_n2k_ais_related_broadcast_msg(msg: Message) -> AISSafetyRelatedBroadca
     :param msg: NMEA2000 Message with PGN 126992
     :return: Dictionary containing the parsed information.
     """
-    raise NotImplementedError()
+    print("NotImplemented, parse_n2k_ais_related_broadcast_msg")
 
 
 # Man Overboard Notification (PGN 127233)
@@ -210,7 +210,7 @@ def set_n2k_mob_notification(sid: int, mob_emitter_id: int, mob_status: N2kMOBSt
     :param mob_emitter_battery_status: see :py:class:`n2k_types.N2kMOBEmitterBatteryStatus`
     :return: NMEA2000 message ready to be sent.
     """
-    raise NotImplementedError()
+    print("NotImplemented, set_n2k_mob_notification")
 
 
 class MOBNotification(NamedTuple):
@@ -237,7 +237,7 @@ def parse_n2k_mob_notification(msg: Message) -> MOBNotification:
     :param msg: NMEA2000 Message with PGN 127233
     :return: Dictionary containing the parsed information.
     """
-    raise NotImplementedError()
+    print("NotImplemented, parse_n2k_mob_notification")
 
 
 # Heading/Track Control (PGN 127237)
@@ -272,7 +272,7 @@ def set_n2k_heading_track_control(rudder_limit_exceeded: N2kOnOff, off_heading_l
     :param vessel_heading: In radians
     :return: NMEA2000 message ready to be sent.
     """
-    raise NotImplementedError()
+    print("NotImplemented, set_n2k_heading_track_control")
 
 
 class HeadingTrackControl(NamedTuple):
@@ -302,7 +302,7 @@ def parse_n2k_heading_track_control(msg: Message) -> HeadingTrackControl:
     :param msg: NMEA2000 Message with PGN 127237
     :return: Dictionary containing the parsed information.
     """
-    raise NotImplementedError()
+    print("NotImplemented, parse_n2k_heading_track_control")
 
 
 # Rudder (PGN 127245)
@@ -318,7 +318,7 @@ def set_n2k_rudder(rudder_position: float, instance: int = 0,
     :param angle_order: Angle where rudder should be turned in radians.
     :return: NMEA2000 Message ready to be sent.
     """
-    raise NotImplementedError()
+    print("NotImplemented, set_n2k_rudder")
 
 
 class Rudder(NamedTuple):
@@ -335,7 +335,7 @@ def parse_n2k_rudder(msg: Message) -> Rudder:
     :param msg: NMEA2000 Message with PGN 127245
     :return: Dictionary containing the parsed information
     """
-    raise NotImplementedError()
+    print("NotImplemented, parse_n2k_rudder")
 
 
 # Vessel Heading (PGN 127250)
@@ -354,7 +354,7 @@ def set_n2k_heading(sid: int, heading: float, deviation: float = N2K_DOUBLE_NAN,
     :param ref: Heading reference. Can be true or magnetic.
     :return: NMEA2000 message ready to be sent.
     """
-    raise NotImplementedError()
+    print("NotImplemented, set_n2k_heading")
 
 
 class Heading(NamedTuple):
@@ -372,7 +372,7 @@ def parse_n2k_heading(msg: Message) -> Heading:
     :param msg: NMEA2000 Message with PGN 127250
     :return: Dictionary containing the parsed information
     """
-    raise NotImplementedError()
+    print("NotImplemented, parse_n2k_heading")
 
 
 # Rate of Turn (PGN 127251)
@@ -414,12 +414,12 @@ def n2k_get_status_on_binary_status(bank_status: N2kBinaryStatus, item_index: in
     :param item_index: Status item index 1-28
     :return: single status of full binary bank status
     """
-    raise NotImplementedError()
+    print("NotImplemented, n2k_get_status_on_binary_status")
 
 
 def n2k_reset_binary_status(bank_status: N2kBinaryStatus) -> None:
     # TODO: can't pass int as reference in python so this doesn't make any sense
-    raise NotImplementedError()
+    print("NotImplemented, n2k_reset_binary_status")
 
 
 def n2k_set_status_binary_on_status(bank_status: N2kBinaryStatus, item_status: N2kOnOff, item_index: int = 1) -> N2kBinaryStatus:
@@ -431,7 +431,7 @@ def n2k_set_status_binary_on_status(bank_status: N2kBinaryStatus, item_status: N
     :param item_index: Index of Item to be changed
     :return: New Bank Status
     """
-    raise NotImplementedError()
+    print("NotImplemented, n2k_set_status_binary_on_status")
 
 
 # Binary status report (PGN 127501)
@@ -596,60 +596,60 @@ def n2k_set_status_binary_on_status(bank_status: N2kBinaryStatus, item_status: N
 
 # ISO Acknowledgement (PGN 59392)
 def set_n2k_pgn_iso_acknowledgement(msg: Message, control: int, group_function: int, pgn: int) -> None:
-    raise NotImplementedError()
+    print("NotImplemented set_n2k_pgn_iso_acknowledgement")
 
 
 # ISO Address Claim (PGN 60928)
 def set_n2k_iso_address_claim(msg: Message, unique_number: int, manufacturer_code: int, device_function: int,
                               device_class: int, device_instance: int = 0, system_instance: int = 0,
                               industry_group: int = 4) -> None:
-    raise NotImplementedError()
+    print("NotImplemented set_n2k_iso_address_claim")
 
 
 def set_n2k_iso_address_claim_by_name(msg: Message, name: int) -> None:
-    raise NotImplementedError()
+    print("NotImplemented set_n2k_iso_address_claim_by_name")
 
 
 # Product Information (PGN 126996)
 def set_n2k_product_information(msg: Message, n2k_version: int, product_code: int, model_id: str, sw_code: str,
                                 model_version: str, model_serial_code: str, certification_level: int = 1,
                                 load_equivalency: int = 1) -> None:
-    raise NotImplementedError()
+    print("NotImplemented set_n2k_product_information")
 
 
 # TODO: parser
 def parse_n2k_pgn_126996(msg: Message) -> ProductInformation:
-    raise NotImplementedError()
+    print("NotImplemented parse_n2k_pgn_126996")
 
 
 # Configuration Information (PGN: 126998)
 def set_n2k_configuration_information(msg: Message, manufacturer_information: str, installation_description1: str,
                                       installation_description2: str) -> None:
-    raise NotImplementedError()
+    print("NotImplemented set_n2k_configuration_information")
 
 
 # TODO: parser
 def parse_n2k_pgn_126998(msg: Message) -> ConfigurationInformation:
-    raise NotImplementedError()
+    print("NotImplemented parse_n2k_pgn_126998")
 
 
 # ISO Request (PGN 59904)
 def set_n2k_pgn_iso_request(msg: Message, destination: int, requested_pgn: int) -> None:
-    raise NotImplementedError()
+    print("NotImplemented set_n2k_pgn_iso_request")
 
 
 def parse_n2k_pgn_59904(msg: Message) -> int:
-    raise NotImplementedError()
+    print("NotImplemented parse_n2k_pgn_59904")
 
 # enum tN2kPGNList {N2kpgnl_transmit=0, N2kpgnl_receive=1 };
 
 
 # PGN List (Transmit and Receive)
 def set_n2k_pgn_transmit_list(msg: Message, destination: int, pgns: List[int]):
-    raise NotImplementedError()
+    print("NotImplemented set_n2k_pgn_transmit_list")
 
 
 # Heartbeat (PGN: 126993)
 # time_interval_ms: between 10 and 655'320ms
 def set_heartbeat(msg: Message, time_interval_ms: int, status_byte: int) -> None:
-    raise NotImplementedError()
+    print("NotImplemented set_heartbeat")
