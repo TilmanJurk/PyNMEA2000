@@ -12,26 +12,27 @@ class DeviceInformation:
     def name(self) -> int:
         """
         TODO: Confirm!
-              Base behaviour tested here: http://tpcg.io/_HZMR7R
-              -
-              Formatting as described here:
-              https://www.nmea.org/Assets/20140710%20nmea-2000-060928%20iso%20address%20claim%20pgn%20corrigendum.pdf \n
-              21: Unique Number\n
-              11: Manufacturer Code\n
-               3: Device Instance Lower\n
-               5: Device Instance Upper\n
-               8: Device Function\n
-               1: Reserved\n
-               7: Device Class\n
-               4: System Instance\n
-               3: Industry Group\n
-               1: Reserved\n
-              Stored in little endian order (based on N2kMsg.cpp: 512)
-              This only serves to heighten my confusion
+        Base behaviour tested here: http://tpcg.io/_HZMR7R
+        \n
+        Formatting as described here:
+        https://www.nmea.org/Assets/20140710%20nmea-2000-060928%20iso%20address%20claim%20pgn%20corrigendum.pdf \n
+        21: Unique Number\n
+        11: Manufacturer Code\n
+        3: Device Instance Lower\n
+        5: Device Instance Upper\n
+        8: Device Function\n
+        1: Reserved\n
+        7: Device Class\n
+        4: System Instance\n
+        3: Industry Group\n
+        1: Reserved\n
+        Stored in little endian order (based on N2kMsg.cpp: 512)
+        This only serves to heighten my confusion
+        \n
         This might be very configuration dependent! As long as we don't use both the name accessor and the direct access
         at the same time it will not matter but a better understanding of the composition of the name is required
         
-        :return:
+        :return: Values combined into NAME
         """
         return (self.unique_number & 0x1fffff) << 0 | \
                (self.manufacturer_code & 0x7ff) << 21 | \
