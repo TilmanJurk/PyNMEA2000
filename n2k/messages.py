@@ -1,7 +1,7 @@
 import math
 from typing import NamedTuple, List, Optional
 
-from n2k import PGN
+from n2k.n2k import PGN
 from n2k.message import n2k_double_is_na, Message, N2K_DOUBLE_NA
 from n2k.can_message import N2kCANMessage
 from n2k.types import N2kTimeSource, N2kAISRepeat, N2kAISTransceiverInformation, N2kMOBStatus, N2kMOBPositionSource, \
