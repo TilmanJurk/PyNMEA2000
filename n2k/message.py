@@ -73,9 +73,8 @@ class Message:
         self.priority = priority & 0x7
         self.pgn = pgn
         self.msg_time = millis()
-        if 0 < len(data) < self.max_data_len:
-            self.data = data
-            self.data_len = len(data)
+        self.data = data[:self.max_data_len]
+        self.data_len = len(data)
         # self.tp_message = False
     
     def check_destination(self) -> None:
