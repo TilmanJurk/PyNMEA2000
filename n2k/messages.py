@@ -645,7 +645,19 @@ def set_n2k_product_information(msg: Message, n2k_version: int, product_code: in
 
 # TODO: parser
 def parse_n2k_pgn_product_information(msg: Message) -> ProductInformation:
-    print("NotImplemented parse_n2k_pgn_126996")
+    assert msg.pgn == PGN.ProductInformation
+
+    index = IntRef(0)
+    return ProductInformation(
+        n2k_version=msg.get_2_byte_uint(index),
+        product_code=msg.get_2_byte_uint(index),
+        n2k_model_id=msg.get_str(MAX_N2K_MODEL_ID_LEN, index),
+        n2k_sw_code=msg.get_str(MAX_N2K_SW_CODE_LEN, index),
+        n2k_model_version=msg.get_str(MAX_N2K_MODEL_VERSION_LEN, index),
+        n2k_model_serial_code=msg.get_str(MAX_N2K_MODEL_SERIAL_CODE_LEN, index),
+        certification_level=msg.get_byte_uint(index),
+        load_equivalency=msg.get_byte_uint(index),
+    )
 
 
 # Configuration Information (PGN: 126998)
@@ -688,7 +700,14 @@ def set_n2k_configuration_information(msg: Message, manufacturer_information: st
 
 # TODO: parser
 def parse_n2k_pgn_configuration_information(msg: Message) -> ConfigurationInformation:
-    print("NotImplemented parse_n2k_pgn_126998")
+    assert msg.pgn == PGN.ConfigurationInformation
+    index = IntRef(0)
+
+    return ConfigurationInformation(
+        installation_description1=msg.get_var_str(index) or "",
+        installation_description2=msg.get_var_str(index) or "",
+        manufacturer_information=msg.get_var_str(index) or "",
+    )
 
 
 # ISO Request (PGN 59904)

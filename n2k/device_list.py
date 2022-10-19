@@ -147,7 +147,7 @@ class DeviceList(MessageHandler):
         # If the product information has not been loaded yet
         if not dev.prod_i_loaded:
             # parse the product information from the message
-            prod_i = n2k.messages.parse_n2k_pgn_126996(msg)
+            prod_i = n2k.messages.parse_n2k_pgn_product_information(msg)
             # check if it is different from the current product information
             #  (can be the same if it was triggered by an address change)
             if dev.prod_i != prod_i:
@@ -165,7 +165,7 @@ class DeviceList(MessageHandler):
         # If the configuration information has not been loaded yet
         if not dev.conf_i_loaded:
             # parse the configuration information from the message
-            conf_i = n2k.messages.parse_n2k_pgn_126998(msg)
+            conf_i = n2k.messages.parse_n2k_pgn_configuration_information(msg)
             # check if it is different from the current configuration information
             if dev.conf_i != conf_i:
                 # and replace it with the new configuration information
