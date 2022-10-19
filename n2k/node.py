@@ -1,5 +1,6 @@
 from collections import deque
 
+import traceback
 import can
 from typing import Optional, List, Callable, Set, Deque
 
@@ -198,10 +199,7 @@ class Node(can.Listener):
                 n2k_can_msg.free_message()
     
     def on_error(self, exc: Exception) -> None:
-        import traceback
-        traceback.format_exc()
-        # TODO
-        raise exc
+        print(traceback.format_exc())
     
     def set_product_information(self, name: str, firmware_version: str, model_version: str, model_serial_code: str,
                                 load_equivalency: int = 1, certification_level: int = 0,

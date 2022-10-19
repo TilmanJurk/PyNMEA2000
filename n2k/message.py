@@ -1,6 +1,7 @@
 # N2kMsg.h
 from typing import List, Optional
 import struct
+from binascii import hexlify
 
 from n2k.utils import millis, IntRef, clamp_int
 from n2k.stream import Stream
@@ -76,7 +77,18 @@ class Message:
         self.data = data[:self.max_data_len]
         self.data_len = len(data)
         # self.tp_message = False
-    
+
+    def __repr__(self):
+        s = "Message("
+        s += "source=" + str(self.source) + ","
+        s += "destination=" + str(self.destination) + ","
+        s += "priority=" + str(self.priority) + ","
+        s += "pgn=" + str(self.pgn) + ","
+        s += "msg_time=" + str(self.msg_time) + ","
+        s += "data=" + str(hexlify(self.data)) + ","
+        s += "data_len=" + str(self.data_len) + ","
+        return s
+
     def check_destination(self) -> None:
         """
         Verify the destination, as only PGNs where the lower byte is 0 can be sent to specific addresses.
