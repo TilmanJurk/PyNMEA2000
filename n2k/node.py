@@ -128,7 +128,8 @@ class Node(can.Listener):
     
     def on_message_received(self, msg: can.Message) -> None:
         msg_header = can_id_to_n2k(msg.arbitration_id)
-        
+        print(msg_header)
+
         # TODO: refactor, split into multiple functions
         
         # TODO: handle multi frame messages; NMEA2000.cpp:1626-1694
