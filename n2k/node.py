@@ -112,7 +112,7 @@ class Node(can.Listener):
     device_list: DeviceList
     can_msg_buffer: N2kCANMessageBuffer
     
-    def __init__(self, bus: can.BusABC, can_msg_buffer_size=20):
+    def __init__(self, bus: can.BusABC, device_information: DeviceInformation, can_msg_buffer_size=20):
         super().__init__()
         self.bus = bus
         self.device_list = DeviceList(self)
@@ -123,6 +123,8 @@ class Node(can.Listener):
         
         self.transmit_messages = []
         self.receive_messages = []
+
+        self.device_information = device_information
 
         self._start_address_claim()
     
