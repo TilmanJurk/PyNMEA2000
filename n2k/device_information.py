@@ -28,6 +28,7 @@ class DeviceInformation:
         1: Reserved\n
         Stored in little endian order (based on N2kMsg.cpp: 512)
         This only serves to heighten my confusion
+        TODO: Use messages.py: 613 / NMEA2000.cpp: 2375 to confirm
         \n
         This might be very configuration dependent! As long as we don't use both the name accessor and the direct access
         at the same time it will not matter but a better understanding of the composition of the name is required

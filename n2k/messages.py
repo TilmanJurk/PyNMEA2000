@@ -1,7 +1,7 @@
 import math
 from typing import NamedTuple, List, Optional
 
-from n2k.n2k import PGN
+from n2k.n2k import PGN, combine_unique_number_and_manufacturer_code
 from n2k.message import n2k_double_is_na, Message, N2K_DOUBLE_NA
 from n2k.can_message import N2kCANMessage
 from n2k.types import N2kTimeSource, N2kAISRepeat, N2kAISTransceiverInformation, N2kMOBStatus, N2kMOBPositionSource, \
@@ -106,10 +106,10 @@ def knots_to_meters_per_second(v: float) -> float:
 class SystemTime(Message):
     def __init__(self, sid: int, system_date: int, system_time: float, time_source: N2kTimeSource = N2kTimeSource.GPS):
         super().__init__()
-        self.pgn = 126992
+        self.pgn = PGN.SystemDateTime
         self.priority = 3
-        self.add_byte(sid)
-        self.add_byte((time_source & 0x0f) | 0xf0)
+        self.add_byte_uint(sid)
+        self.add_byte_uint((time_source & 0x0f) | 0xf0)
         self.add_2_byte_uint(system_date)
         self.add_4_byte_double(system_time, 1e-4)
         
@@ -601,11 +601,11 @@ def n2k_set_status_binary_on_status(bank_status: N2kBinaryStatus, item_status: N
 def set_n2k_pgn_iso_acknowledgement(msg: Message, control: int, group_function: int, pgn: int) -> None:
     msg.pgn = PGN.IsoAcknowledgement
     msg.priority = 6
-    msg.add_byte(control)
-    msg.add_byte(group_function)
-    msg.add_byte(0xff)  # Reserved
-    msg.add_byte(0xff)  # Reserved
-    msg.add_byte(0xff)  # Reserved
+    msg.add_byte_uint(control)
+    msg.add_byte_uint(group_function)
+    msg.add_byte_uint(0xff)  # Reserved
+    msg.add_byte_uint(0xff)  # Reserved
+    msg.add_byte_uint(0xff)  # Reserved
     msg.add_3_byte_int(pgn)
 
 
@@ -613,7 +613,14 @@ def set_n2k_pgn_iso_acknowledgement(msg: Message, control: int, group_function: 
 def set_n2k_iso_address_claim(msg: Message, unique_number: int, manufacturer_code: int, device_function: int,
                               device_class: int, device_instance: int = 0, system_instance: int = 0,
                               industry_group: int = 4) -> None:
-    print("NotImplemented set_n2k_iso_address_claim")
+    msg.pgn = PGN.IsoAddressClaim
+    msg.priority = 6
+
+    msg.add_4_byte_uint(combine_unique_number_and_manufacturer_code(unique_number, manufacturer_code))
+    msg.add_byte_uint(device_instance)
+    msg.add_byte_uint(device_function)
+    msg.add_byte_uint((device_class & 0x7f) << 1)
+    msg.add_byte_uint(0x80 | ((industry_group & 0x7) << 4) | (system_instance & 0x0f))
 
 
 def set_n2k_iso_address_claim_by_name(msg: Message, name: int) -> None:
@@ -632,8 +639,8 @@ def set_n2k_product_information(msg: Message, n2k_version: int, product_code: in
     msg.add_str(sw_code, MAX_N2K_SW_CODE_LEN)
     msg.add_str(model_version, MAX_N2K_MODEL_VERSION_LEN)
     msg.add_str(model_serial_code, MAX_N2K_MODEL_SERIAL_CODE_LEN)
-    msg.add_byte(certification_level)
-    msg.add_byte(load_equivalency)
+    msg.add_byte_uint(certification_level)
+    msg.add_byte_uint(load_equivalency)
 
 
 # TODO: parser
@@ -644,7 +651,39 @@ def parse_n2k_pgn_product_information(msg: Message) -> ProductInformation:
 # Configuration Information (PGN: 126998)
 def set_n2k_configuration_information(msg: Message, manufacturer_information: str, installation_description1: str,
                                       installation_description2: str) -> None:
-    print("NotImplemented set_n2k_configuration_information")
+    total_len = 0
+    max_len = msg.max_data_len - 6  # each field has 2 extra bytes
+    man_info_len = min(len(manufacturer_information), Max_N2K_CONFIGURATION_INFO_FIELD_LEN)
+    inst_desc1_len = min(len(installation_description1), Max_N2K_CONFIGURATION_INFO_FIELD_LEN)
+    inst_desc2_len = min(len(installation_description2), Max_N2K_CONFIGURATION_INFO_FIELD_LEN)
+
+    if total_len + man_info_len > max_len:
+        man_info_len = max_len - total_len
+    total_len += man_info_len
+    if total_len + inst_desc1_len > max_len:
+        inst_desc1_len = max_len - total_len
+    total_len += inst_desc1_len
+    if total_len + inst_desc2_len > max_len:
+        inst_desc2_len = max_len - total_len
+    total_len += inst_desc2_len
+
+    msg.pgn = PGN.ConfigurationInformation
+    msg.priority = 6
+
+    # Installation Description 1
+    msg.add_byte_uint(inst_desc1_len + 2)
+    msg.add_byte_uint(0x01)
+    msg.add_str(installation_description1, inst_desc1_len)
+
+    # Installation Description 2
+    msg.add_byte_uint(inst_desc2_len + 2)
+    msg.add_byte_uint(0x01)
+    msg.add_str(installation_description2, inst_desc1_len)
+
+    # Manufacturer Information
+    msg.add_byte_uint(man_info_len + 2)
+    msg.add_byte_uint(0x01)
+    msg.add_str(manufacturer_information, man_info_len)
 
 
 # TODO: parser

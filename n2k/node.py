@@ -666,7 +666,7 @@ class Node(can.Listener):
         msg.pgn = PGN.SupportedPGNList
         msg.priority = 6
         # msg.tp_message = use_tp
-        msg.add_byte(N2kPGNList.transmit)
+        msg.add_byte_uint(N2kPGNList.transmit)
         for supported_pgn in DefaultTransmitMessages + self.transmit_messages:
             msg.add_3_byte_int(supported_pgn)
         self.send_msg(msg)
@@ -677,7 +677,7 @@ class Node(can.Listener):
         msg.pgn = PGN.SupportedPGNList
         msg.priority = 6
         # msg.tp_message = use_tp
-        msg.add_byte(N2kPGNList.receive)
+        msg.add_byte_uint(N2kPGNList.receive)
         for supported_pgn in DefaultReceiveMessages + self.receive_messages:
             msg.add_3_byte_int(supported_pgn)
         self.send_msg(msg)
