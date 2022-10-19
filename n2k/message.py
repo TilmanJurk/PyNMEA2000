@@ -3,6 +3,7 @@ from typing import List, Optional
 import struct
 from binascii import hexlify
 
+from n2k.n2k import PGN
 from n2k.utils import millis, IntRef, clamp_int
 from n2k.stream import Stream
 from n2k.constants import *
@@ -83,7 +84,14 @@ class Message:
         s += "source=" + str(self.source) + ","
         s += "destination=" + str(self.destination) + ","
         s += "priority=" + str(self.priority) + ","
-        s += "pgn=" + str(self.pgn) + ","
+
+        pgn = self.pgn
+        try:
+            pgn = PGN(pgn)
+        except ValueError:
+            pass
+
+        s += "pgn=" + str(pgn) + ","
         s += "msg_time=" + str(self.msg_time) + ","
         s += "data=" + str(hexlify(self.data)) + ","
         s += "data_len=" + str(self.data_len) + ","
