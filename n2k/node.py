@@ -172,7 +172,7 @@ class Node(can.Listener):
                     if n2k_can_msg.last_frame + 1 == msg.data[0]:
                         # This is the next message in the sequence
                         n2k_can_msg.last_frame = msg.data[0]
-                        n2k_can_msg.n2k_msg.data.append(msg.data[1:])
+                        n2k_can_msg.n2k_msg.data.extend(msg.data[1:])
                         if len(n2k_can_msg.n2k_msg.data) > n2k_can_msg.n2k_msg.max_data_len:
                             # Malformed message, TODO: log warning
                             n2k_can_msg.n2k_msg.data = n2k_can_msg.n2k_msg.data[:n2k_can_msg.n2k_msg.max_data_len]
@@ -198,8 +198,10 @@ class Node(can.Listener):
                 n2k_can_msg.free_message()
     
     def on_error(self, exc: Exception) -> None:
+        import traceback
+        traceback.format_exc()
         # TODO
-        print(exc)
+        raise exc
     
     def set_product_information(self, name: str, firmware_version: str, model_version: str, model_serial_code: str,
                                 load_equivalency: int = 1, certification_level: int = 0,
