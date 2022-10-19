@@ -2,7 +2,7 @@ import math
 from typing import NamedTuple, List, Optional
 
 from n2k import PGN
-from n2k.message import n2k_double_is_nan, Message, N2K_DOUBLE_NAN
+from n2k.message import n2k_double_is_na, Message, N2K_DOUBLE_NA
 from n2k.can_message import N2kCANMessage
 from n2k.types import N2kTimeSource, N2kAISRepeat, N2kAISTransceiverInformation, N2kMOBStatus, N2kMOBPositionSource, \
     N2kHeadingReference, N2kMOBEmitterBatteryStatus, N2kOnOff, N2kSteeringMode, N2kTurnMode, N2kRudderDirectionOrder, \
@@ -12,49 +12,49 @@ from n2k.utils import IntRef
 
 
 def rad_to_deg(v: float) -> float:
-    if n2k_double_is_nan(v):
+    if n2k_double_is_na(v):
         return v
     return math.degrees(v)
 
 
 def deg_to_rad(v: float) -> float:
-    if n2k_double_is_nan(v):
+    if n2k_double_is_na(v):
         return v
     return math.radians(v)
 
 
 def c_to_kelvin(v: float) -> float:
-    if n2k_double_is_nan(v):
+    if n2k_double_is_na(v):
         return v
     return v + 273.15
 
 
 def kelvin_to_c(v: float) -> float:
-    if n2k_double_is_nan(v):
+    if n2k_double_is_na(v):
         return v
     return v - 273.15
 
 
 def f_to_kelvin(v: float) -> float:
-    if n2k_double_is_nan(v):
+    if n2k_double_is_na(v):
         return v
     return (v - 32) * 5.0 / 9.0 + 273.15
 
 
 def kelvin_to_f(v: float) -> float:
-    if n2k_double_is_nan(v):
+    if n2k_double_is_na(v):
         return v
     return (v - 273.15) * 9.0 / 4.0 + 32
 
 
 def mbar_to_pascal(v: float) -> float:
-    if n2k_double_is_nan(v):
+    if n2k_double_is_na(v):
         return v
     return v * 100
 
 
 def pascal_to_mbar(v: float) -> float:
-    if n2k_double_is_nan(v):
+    if n2k_double_is_na(v):
         return v
     return v / 1000
 
@@ -68,37 +68,37 @@ def pascal_to_hpa(v: float) -> float:
 
 
 def ah_to_coulomb(v: float) -> float:
-    if n2k_double_is_nan(v):
+    if n2k_double_is_na(v):
         return v
     return v * 3600
 
 
 def coulomb_to_ah(v: float) -> float:
-    if n2k_double_is_nan(v):
+    if n2k_double_is_na(v):
         return v
     return v / 3600
 
 
 def hours_to_seconds(v: float) -> float:
-    if n2k_double_is_nan(v):
+    if n2k_double_is_na(v):
         return v
     return v * 3600
 
 
 def seconds_to_hours(v: float) -> float:
-    if n2k_double_is_nan(v):
+    if n2k_double_is_na(v):
         return v
     return v / 3600
 
 
 def meters_per_second_to_knots(v: float) -> float:
-    if n2k_double_is_nan(v):
+    if n2k_double_is_na(v):
         return v
     return v * 3600 / 1852
 
 
 def knots_to_meters_per_second(v: float) -> float:
-    if n2k_double_is_nan(v):
+    if n2k_double_is_na(v):
         return v
     return v * 1852 / 3600
 
@@ -311,7 +311,7 @@ def parse_n2k_heading_track_control(msg: Message) -> HeadingTrackControl:
 # Rudder (PGN 127245)
 def set_n2k_rudder(rudder_position: float, instance: int = 0,
                    rudder_direction_order: N2kRudderDirectionOrder = N2kRudderDirectionOrder.NoDirectionOrder,
-                   angle_order: float = N2K_DOUBLE_NAN) -> Message:
+                   angle_order: float = N2K_DOUBLE_NA) -> Message:
     """
     Rudder
     
@@ -342,7 +342,7 @@ def parse_n2k_rudder(msg: Message) -> Rudder:
 
 
 # Vessel Heading (PGN 127250)
-def set_n2k_heading(sid: int, heading: float, deviation: float = N2K_DOUBLE_NAN, variation: float = N2K_DOUBLE_NAN,
+def set_n2k_heading(sid: int, heading: float, deviation: float = N2K_DOUBLE_NA, variation: float = N2K_DOUBLE_NA,
                     ref: N2kHeadingReference = N2kHeadingReference.true) -> Message:
     """
     Vessel Heading (PGN 127250).
@@ -352,8 +352,8 @@ def set_n2k_heading(sid: int, heading: float, deviation: float = N2K_DOUBLE_NAN,
     :param sid: Sequence ID. If your device is e.g. boat speed and heading at same time, you can set same SID for
         different messages to indicate that they are measured at same time.
     :param heading: Heading in radians
-    :param deviation: Magnetic deviation in radians. Use `N2K_DOUBLE_NAN` for undefined value.
-    :param variation: Magnetic variation in radians. Use `N2K_DOUBLE_NAN` for undefined value.
+    :param deviation: Magnetic deviation in radians. Use `N2K_DOUBLE_NA` for undefined value.
+    :param variation: Magnetic variation in radians. Use `N2K_DOUBLE_NA` for undefined value.
     :param ref: Heading reference. Can be true or magnetic.
     :return: NMEA2000 message ready to be sent.
     """

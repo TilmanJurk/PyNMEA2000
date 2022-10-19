@@ -91,3 +91,8 @@ class IntRef:
     
     def __int__(self):
         return self.value
+
+
+def clamp_int(min_val: int, val: int, max_val: int) -> int:
+    return int(min(max_val, max(min_val, val)))
+    
