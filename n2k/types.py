@@ -367,7 +367,7 @@ class N2kMOBEmitterBatteryStatus(IntEnum):
 
 class N2kPGNList(IntEnum):
     transmit = 0
-    receive = 0
+    receive = 1
 
 
 # Aliases for N2K standard types

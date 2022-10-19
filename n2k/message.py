@@ -3,18 +3,7 @@ from typing import List
 
 from n2k.utils import millis, IntRef
 from n2k.stream import Stream
-
-
-N2K_DOUBLE_NAN = -1e9
-N2K_FLOAT_NAN  = -1e9
-N2K_UINT8_NA   = 0xff
-N2K_INT8_NA    = 0x7f
-N2K_UINT16_NA  = 0xffff
-N2K_INT16_NA   = 0x7fff
-N2K_UINT32_NA  = 0xffffffff
-N2K_INT32_NA   = 0x7fffffff
-N2K_UINT64_NA  = 0xffffffffffffffff
-N2K_INT64_NA   = 0x7fffffffffffffff
+from n2k.constants import *
 
 
 def n2k_double_is_nan(v: float) -> bool:
@@ -148,7 +137,8 @@ class Message:
     def add_uint_64(self, v: int) -> None:
         print("NotImplemented add_uint_64")
     
-    def add_str(self, v: str) -> None:
+    def add_str(self, v: str, length: int) -> None:
+        # fill up to length using 0xff
         print("NotImplemented add_str")
     
     def add_var_str(self, v: str) -> None:

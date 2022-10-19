@@ -2,8 +2,8 @@ from typing import List, Optional
 
 from n2k import N2kCANMessage
 from n2k.utils import millis
+from n2k.constants import MAX_N2K_MSG_BUF_TIME
 
-MAX_N2K_MSG_BUF_TIME: int = 100
 
 class N2kCANMessageBuffer:
     _buffer: List[N2kCANMessage]
@@ -38,6 +38,6 @@ class N2kCANMessageBuffer:
         
     def find_matching(self, pgn: int, source: int) -> Optional[N2kCANMessage]:
         for msg in self._buffer:
-            if msg.n2k_msg.pgn == pgn and msg.n2k_msg.source == source: # and not msg.n2k_msg.is_tp_message: # TODO: ISO Multicast
+            if msg.n2k_msg.pgn == pgn and msg.n2k_msg.source == source: #  and not msg.n2k_msg.is_tp_message: # TODO: ISO Multicast
                 return msg
         return None

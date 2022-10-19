@@ -7,12 +7,7 @@ import n2k.messages
 from n2k.n2k import PGN
 from n2k.types import N2kPGNList
 from n2k.utils import IntRef, millis
-
-N2K_MAX_BUS_DEVICES = 254
-
-N2K_DL_TIME_FOR_FIRST_REQUEST = 1000  # Time in ms for first request after device has been noticed on the bus
-N2K_DL_TIME_BETWEEN_PI_REQUEST = 1000  # Time in ms between product information requests
-N2K_DL_TIME_BETWEEN_CI_REQUEST = 1000  # Time in ms between configuration information requests
+from n2k.constants import *
 
 
 class DeviceList(MessageHandler):

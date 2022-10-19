@@ -1,11 +1,14 @@
 import math
-from typing import NamedTuple, List
+from typing import NamedTuple, List, Optional
 
+from n2k import PGN
 from n2k.message import n2k_double_is_nan, Message, N2K_DOUBLE_NAN
 from n2k.can_message import N2kCANMessage
 from n2k.types import N2kTimeSource, N2kAISRepeat, N2kAISTransceiverInformation, N2kMOBStatus, N2kMOBPositionSource, \
     N2kHeadingReference, N2kMOBEmitterBatteryStatus, N2kOnOff, N2kSteeringMode, N2kTurnMode, N2kRudderDirectionOrder, \
     ProductInformation, ConfigurationInformation
+from n2k.constants import *
+from n2k.utils import IntRef
 
 
 def rad_to_deg(v: float) -> float:
@@ -596,7 +599,14 @@ def n2k_set_status_binary_on_status(bank_status: N2kBinaryStatus, item_status: N
 
 # ISO Acknowledgement (PGN 59392)
 def set_n2k_pgn_iso_acknowledgement(msg: Message, control: int, group_function: int, pgn: int) -> None:
-    print("NotImplemented set_n2k_pgn_iso_acknowledgement")
+    msg.pgn = PGN.IsoAcknowledgement
+    msg.priority = 6
+    msg.add_byte(control)
+    msg.add_byte(group_function)
+    msg.add_byte(0xff)  # Reserved
+    msg.add_byte(0xff)  # Reserved
+    msg.add_byte(0xff)  # Reserved
+    msg.add_3_byte_int(pgn)
 
 
 # ISO Address Claim (PGN 60928)
@@ -614,11 +624,20 @@ def set_n2k_iso_address_claim_by_name(msg: Message, name: int) -> None:
 def set_n2k_product_information(msg: Message, n2k_version: int, product_code: int, model_id: str, sw_code: str,
                                 model_version: str, model_serial_code: str, certification_level: int = 1,
                                 load_equivalency: int = 1) -> None:
-    print("NotImplemented set_n2k_product_information")
+    msg.pgn = PGN.ProductInformation,
+    msg.priority = 6
+    msg.add_2_byte_uint(n2k_version)
+    msg.add_2_byte_uint(product_code)
+    msg.add_str(model_id, MAX_N2K_MODEL_ID_LEN)
+    msg.add_str(sw_code, MAX_N2K_SW_CODE_LEN)
+    msg.add_str(model_version, MAX_N2K_MODEL_VERSION_LEN)
+    msg.add_str(model_serial_code, MAX_N2K_MODEL_SERIAL_CODE_LEN)
+    msg.add_byte(certification_level)
+    msg.add_byte(load_equivalency)
 
 
 # TODO: parser
-def parse_n2k_pgn_126996(msg: Message) -> ProductInformation:
+def parse_n2k_pgn_product_information(msg: Message) -> ProductInformation:
     print("NotImplemented parse_n2k_pgn_126996")
 
 
@@ -629,17 +648,22 @@ def set_n2k_configuration_information(msg: Message, manufacturer_information: st
 
 
 # TODO: parser
-def parse_n2k_pgn_126998(msg: Message) -> ConfigurationInformation:
+def parse_n2k_pgn_configuration_information(msg: Message) -> ConfigurationInformation:
     print("NotImplemented parse_n2k_pgn_126998")
 
 
 # ISO Request (PGN 59904)
 def set_n2k_pgn_iso_request(msg: Message, destination: int, requested_pgn: int) -> None:
-    print("NotImplemented set_n2k_pgn_iso_request")
+    msg.pgn = PGN.IsoRequest
+    msg.destination = destination
+    msg.priority = 6
+    msg.add_3_byte_int(requested_pgn)
 
 
-def parse_n2k_pgn_59904(msg: Message) -> int:
-    print("NotImplemented parse_n2k_pgn_59904")
+def parse_n2k_pgn_iso_request(msg: Message) -> Optional[int]:
+    if 3 <= msg.data_len <= 8:
+        return msg.get_3_byte_uint(IntRef(0))
+    return None
 
 # enum tN2kPGNList {N2kpgnl_transmit=0, N2kpgnl_receive=1 };
 

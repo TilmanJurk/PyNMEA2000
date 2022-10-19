@@ -10,47 +10,14 @@ from n2k.device_information import DeviceInformation
 from n2k.message import Message
 from n2k.message_handler import MessageHandler
 from n2k.can_message import N2kCANMessage
-from n2k.messages import set_n2k_iso_address_claim
+from n2k.messages import set_n2k_iso_address_claim, parse_n2k_pgn_iso_request, set_n2k_pgn_iso_acknowledgement, \
+    set_n2k_product_information, set_n2k_configuration_information
 from n2k.n2k import is_fast_packet_first_frame, DefaultTransmitMessages, DefaultReceiveMessages, \
     is_default_single_frame_message, is_mandatory_fast_packet_message, is_default_fast_packet_message, \
-    is_fast_packet_system_message, is_single_frame_system_message, is_proprietary_fast_packet_message, PGN
-from n2k.types import ProductInformation, CANSendFrame, ConfigurationInformation
-from n2k.utils import millis
-
-
-#: :obj:`int`
-MAX_N2K_MODEL_ID_LEN: int = 32
-#: :obj:`int`
-MAX_N2K_SW_CODE_LEN: int = 32
-#: :obj:`int`
-MAX_N2K_MODEL_VERSION_LEN: int = 32
-#: :obj:`int`
-MAX_N2K_MODEL_SERIAL_CODE_LEN: int = 32
-#: :obj:`int`
-MAX_N2K_PRODUCT_INFO_STR_LEN: int = 32
-
-#: :obj:`int`
-Max_N2K_CONFIGURATION_INFO_FIELD_LEN: int = 70
-
-N2K_MESSAGE_GROUPS: int = 2
-N2K_MAX_CAN_BUS_ADDRESS: int = 251
-N2K_NULL_CAN_BUS_ADDRESS: int = 254
-N2K_BROADCAST_CAN_BUS_ADDRESS: int = 255
-
-N2K_ADDRESS_CLAIM_TIMEOUT = 250
-MAX_HEARTBEAT_INTERVAL = 655320
-
-TP_MAX_FRAMES = 5  # Maximum amount of Frames that can be received at a single time # TODO: why?
-TP_CM_BAM = 32
-TP_CM_RTS = 16
-TP_CM_CTS = 17
-TP_CM_ACK = 19
-TP_CM_Abort = 255
-
-TP_CM_AbortBusy = 1
-TP_CM_AbortNoResources = 2
-TP_CM_AbortTimeout = 3
-
+    is_fast_packet_system_message, is_single_frame_system_message, is_proprietary_fast_packet_message, PGN, is_broadcast
+from n2k.types import ProductInformation, CANSendFrame, ConfigurationInformation, N2kPGNList
+from n2k.utils import millis, IntRef
+from n2k.constants import *
 
 
 class Node(can.Listener):
@@ -62,15 +29,15 @@ class Node(can.Listener):
     # Provide easy option to let device be configured by nmea2000 mfd
     # Send messages
     # Add callbacks by message types
-
+    
     # MsgHandler Class?
-
+    
     # Ignored
     # - ForwardType
     # - N2kMode
     # - DebugMode
     # - Internal Device (why necessary?; maybe to have multiple devices operate via the same library instance?)
-
+    
     ### Start Internal Device ###
     # TODO: Default values - change to sensible values
     n2k_source: int = 0  # uint8_t
@@ -82,63 +49,63 @@ class Node(can.Listener):
     pending_configuration_information: Optional[int] = None  # unsigned long
     address_claim_started: int = 0  # unsigned long
     address_claim_end_source: int = N2K_MAX_CAN_BUS_ADDRESS  # uint8_t
-
+    
     transmit_messages: List[int]
     receive_messages: List[int]
-
+    
     max_pgn_sequence_counters: int = 0  # size_t
     pgn_sequence_counters: List[int] = None  # unsigned long | array pointer?
-
+    
     # ISO Multi Packet Support
     # pending_tp_msg: N2kMessage
     # next_dt_send_time: int = 0  # Time, when next data packet can be sent on TP broadcast
     # next_dt_sequence: int = 0  # uint8_t
-
+    
     # Heartbeat
     heartbeat_interval: int
     default_heartbeat_interval: int
     next_heartbeat_send_time: int
-
+    
     def set_pending_iso_address_claim(self, from_now: int = 2) -> None:
         self.pending_iso_address_claim = millis() + from_now
-
+    
     def clear_pending_iso_address_claim(self) -> None:
         self.pending_iso_address_claim = None
-
+    
     def query_pending_iso_address_claim(self) -> bool:
         if self.pending_iso_address_claim is not None:
             return self.pending_iso_address_claim < millis()
         return False
-
+    
     def set_pending_product_information(self) -> None:
         self.pending_product_information = millis() + 187 + self.n2k_source * 8  # TODO: investigate weird offsets
-
+    
     def clear_pending_product_information(self) -> None:
         self.pending_product_information = None
-
+    
     def query_pending_product_information(self) -> bool:
         if self.pending_product_information is not None:
             return self.pending_product_information < millis()
         return False
-
+    
     def set_pending_configuration_information(self) -> None:
         self.pending_configuration_information = millis() + 187 + self.n2k_source * 10
-
+    
     def clear_pending_configuration_information(self) -> None:
         self.pending_configuration_information = None
-
+    
     def query_pending_configuration_information(self) -> bool:
         if self.pending_configuration_information is not None:
             return self.pending_configuration_information < millis()
         return False
-
+    
     def update_address_claim_end_source(self) -> None:
         self.address_claim_end_source = self.n2k_source
         if self.address_claim_end_source > 0:
             self.address_claim_end_source -= 1
         else:
             self.address_claim_end_source = N2K_MAX_CAN_BUS_ADDRESS
-
+    
     ### End Internal Device ###
     
     bus: can.BusABC
@@ -154,14 +121,16 @@ class Node(can.Listener):
         self.can_msg_buffer = N2kCANMessageBuffer(can_msg_buffer_size)
         self._can_send_frame_buf = deque()
         
-        self.transmit_messages = DefaultTransmitMessages[:]
-        self.receive_messages = DefaultReceiveMessages[:]
+        self.transmit_messages = []
+        self.receive_messages = []
 
+        self._start_address_claim()
+    
     def on_message_received(self, msg: can.Message) -> None:
         msg_header = can_id_to_n2k(msg.arbitration_id)
         
         # TODO: refactor, split into multiple functions
-
+        
         # TODO: handle multi frame messages; NMEA2000.cpp:1626-1694
         # TODO: iso multi packet support
         # if self._test_handle_tp_message(msg_header.pgn, msg_header.source, msg_header.destination, len(msg_header.data)):
@@ -224,7 +193,7 @@ class Node(can.Listener):
                     if handler.pgn == 0 or handler.pgn == n2k_can_msg.n2k_msg.pgn:
                         handler.handle_msg(n2k_can_msg.n2k_msg)
                 n2k_can_msg.free_message()
-        
+    
     def on_error(self, exc: Exception) -> None:
         # TODO
         print(exc)
@@ -255,7 +224,7 @@ class Node(can.Listener):
             certification_level=certification_level,
             load_equivalency=load_equivalency,
         )
-        
+    
     def set_configuration_information(self,
                                       manufacturer_information: str = "NMEA2000 Library "
                                                                       "https://github.com/finnboeger/NMEA2000",
@@ -274,7 +243,7 @@ class Node(can.Listener):
             installation_description1=installation_description1[:Max_N2K_CONFIGURATION_INFO_FIELD_LEN],
             installation_description2=installation_description2[:Max_N2K_CONFIGURATION_INFO_FIELD_LEN]
         )
-        
+    
     def set_device_information(self, unique_number: int, device_function: int = 130, device_class: int = 25,
                                manufacturer_code: int = 2046) -> None:
         """
@@ -290,9 +259,9 @@ class Node(can.Listener):
         """
         self.device_information = DeviceInformation()
         self.device_information.unique_number = unique_number
+        self.device_information.manufacturer_code = manufacturer_code
         self.device_information.device_function = device_function
         self.device_information.device_class = device_class
-        self.device_information.manufacturer_code = manufacturer_code
         """
         1 - On-Highway Equipment\n
         2 - Agricultural and Forestry Equipment\n
@@ -302,42 +271,42 @@ class Node(can.Listener):
         """
         self.device_information.industry_group = 4
         # TODO: device_instance, system_instance
-
+    
     message_handlers: Set[MessageHandler]
     address_changed_callback: Callable[['Node'], None]
     device_information_changed_callback: Callable[['Node'], None]
     address_changed: bool = False
     device_information_changed: bool = False
-
+    
     # Configuration Information
     configuration_information: ConfigurationInformation = ConfigurationInformation("", "", "")
-
+    
     custom_single_frame_messages: Optional[List[int]] = None
     custom_fast_packet_messages: Optional[List[int]] = None
-
+    
     # buffer for received messages
     _n2k_can_msg_buf: List[Message] # TODO: init if we keep it
     _max_n2k_can_msgs: int  # uint8_t
-
+    
     _can_send_frame_buf: Deque[can.message.Message]
     _max_can_send_frames: int = 40
     _can_send_frame_buffer_write: int  # uint16_t
     _can_send_frame_buffer_read: int  # uint16_t
     _max_can_receive_frames: int  # uint16_t
-
+    
     # TODO: Message Handler for normal messages
     # TODO: Message Handler for request messages
     _request_handler: Optional[Callable[[int, int], bool]]
-
+    
     # TODO: Message Handler for group functions
-
+    
     def _send_frames(self) -> bool:
         while len(self._can_send_frame_buf) > 0:
             can_msg = self._can_send_frame_buf.popleft()
             if not self._send_frame(can_msg.arbitration_id, can_msg.dlc, can_msg.data):
                 return False
         return True
-
+    
     def _send_frame(self, frame_id: int, length: int, buf: bytearray) -> bool:
         if not self._send_frames():
             return False
@@ -354,35 +323,35 @@ class Node(can.Listener):
                 pass
             return False
         return True
-
+    
     def _get_next_free_can_send_frame(self) -> CANSendFrame:
         print("NotImplemented _get_next_free_can_send_frame")
-
+    
     def _send_pending_information(self) -> None:
         print("NotImplemented _send_pending_information")
-
+    
     def _is_initialized(self) -> bool:
         print("NotImplemented _is_initialized")
-
+    
     # ISO Multi Packet Support
     # def _find_free_can_msg_index(self, pgn: int, source: int, destination: int, tp_msg: bool, msg_index: int) -> None:
     def _find_free_can_msg_index(self, pgn: int, source: int, destination: int, msg_index: int) -> None:
         print("NotImplemented _find_free_can_msg_index")
-
+    
     def _set_n2k_can_buf_msg(self, can_id: int, length: int, buf: bytearray):
         print("NotImplemented _set_n2k_can_buf_msg")
-
+    
     def _is_fast_packet_pgn(self, pgn: int) -> bool:
         return is_fast_packet_system_message(pgn) or is_mandatory_fast_packet_message(pgn) or \
                is_default_fast_packet_message(pgn) or is_proprietary_fast_packet_message(pgn) or \
                (self.custom_fast_packet_messages is not None and pgn in self.custom_fast_packet_messages)
-
+    
     def _is_fast_packet(self, msg: Message) -> bool:
         if msg.priority >= 0x80:
             # Special handling for force to send message as single frame # TODO: force?
             return False
         return self._is_fast_packet_pgn(msg.pgn)
-
+    
     def _check_known_message(self, pgn: int) -> (bool, bool, bool):
         # TODO: refactor
         system_message = False
@@ -414,29 +383,67 @@ class Node(can.Listener):
         if fast_packet:
             return True, system_message, fast_packet
         
-        fast_packet = is_proprietary_fast_packet_message()
+        fast_packet = is_proprietary_fast_packet_message(pgn)
         
         return False, system_message, fast_packet
-
+    
     def _handle_received_system_message(self, msg: N2kCANMessage) -> bool:
-        print("NotImplemented _handle_received_system_message")
-
+        if msg.system_message:
+            if msg.n2k_msg.pgn == PGN.IsoAcknowledgement:
+                pass
+            elif msg.n2k_msg.pgn == PGN.IsoRequest:
+                self._handle_iso_request(msg.n2k_msg)
+            elif msg.n2k_msg.pgn == PGN.IsoAddressClaim:
+                self._handle_iso_address_claim(msg.n2k_msg)
+            elif msg.n2k_msg.pgn == PGN.CommandedAddress:
+                self._handle_commanded_address(msg.n2k_msg)
+            # if msg.n2k_msg.pgn == PGN.RequestGroupFunction:
+            #    self._handle_group_function(msg.n2k_msg)
+            return True
+        return False
+    
     def _respond_iso_request(self, msg: Message, requested_pgn: int) -> None:
-        print("NotImplemented _respond_iso_request")
-
+        if self._is_address_claim_started():
+            # We don't respond to any queries during address claiming
+            return
+        if requested_pgn == PGN.IsoAddressClaim:
+            # Someone is asking others to claim their addresses
+            self.send_iso_address_claim(0xff)
+        elif requested_pgn == PGN.SupportedPGNList:
+            self.send_tx_pgn_list(msg.source)
+            self.send_rx_pgn_list(msg.source)
+        elif requested_pgn == PGN.ProductInformation:
+            self.send_product_information()
+        elif requested_pgn == PGN.ConfigurationInformation:
+            self.send_configuration_information()
+        else:
+            if self._request_handler is not None and self._request_handler(requested_pgn, msg.source):
+                return
+            ack_msg = Message()
+            set_n2k_pgn_iso_acknowledgement(msg, 1, 0xff, requested_pgn)
+            ack_msg.destination = msg.source
+            self.send_msg(ack_msg)
+    
     def _handle_iso_request(self, msg: Message) -> None:
-        print("NotImplemented _handle_iso_request")
-
+        if not (is_broadcast(msg.destination) or msg.destination == self.n2k_source):
+            requested_pgn = parse_n2k_pgn_iso_request(msg)
+            if requested_pgn is not None:
+                self._respond_iso_request(msg, requested_pgn)
+    
     #  TOOD
     # def _respond_group_function(self, msg: N2kMessage, group_function_code: GroupFunctionCode, pgn_for_group_function: int) -> None:
     #     raise NotImplementedError()
-
+    
     # def _handle_group_function(self, msg: N2kMessage) -> None:
     #    raise NotImplementedError()
-
+    
     def _start_address_claim(self) -> None:
-        print("NotImplemented _start_address_claim")
-
+        if self.n2k_source == N2K_NULL_CAN_BUS_ADDRESS:
+            self._get_next_address(True)
+        self.address_claim_started = 0
+        self.send_iso_address_claim()
+        self.address_claim_started = millis()
+    
     def _is_address_claim_started(self) -> bool:
         if self.address_claim_started != 0 and \
                 self.address_claim_started + N2K_ADDRESS_CLAIM_TIMEOUT < millis():
@@ -444,21 +451,69 @@ class Node(can.Listener):
             # We have claimed our address. Save end source for next possible claim run.
             # TODO: why do it here? assuming to allow for contest of source address? where is contest handled?
             self.update_address_claim_end_source()
-            
+        
         return self.address_claim_started != 0
-
+    
     def _handle_iso_address_claim(self, msg: Message) -> None:
-        print("NotImplemented _handle_iso_address_claim")
-
+        if msg.source == N2K_NULL_CAN_BUS_ADDRESS or msg.source != self.n2k_source:
+            # Not claiming our address, so we don't care
+            return
+        
+        index = IntRef(0)
+        caller_name = msg.get_uint_64(index)
+        
+        if self.device_information.name < caller_name:
+            # We can keep our information, so reclaim it.
+            self.send_iso_address_claim()
+        else:
+            # We have to move to another address
+            if self.device_information.name == caller_name and self._is_address_claim_started():
+                # If the name is the same, then the first instance will win the claim and get the address.
+                # This shouldn't happen, if the user takes care to set a unique ID for device information.
+                # If he does not there is no problem with this class, but e.g. Garmin gets crazy.
+                # Try to solve situation by changing our device instance.
+                self.device_information.device_instance += 1
+                self.device_information_changed = True
+            else:
+                self._get_next_address()
+            self._start_address_claim()
+    
     def _handle_commanded_address(self, msg: Message) -> None:
-        print("NotImplemented _handle_commanded_address")
-
+        if msg.pgn != PGN.CommandedAddress or not msg.tp_message or msg.data_len != 9:
+            return
+        if not is_broadcast(msg.destination) and msg.destination != self.n2k_source:
+            return
+        index = IntRef(0)
+        commanded_name = msg.get_uint_64(index)
+        new_address = msg.get_byte(index)
+        if new_address >= 252:
+            return
+        if self.device_information.name == commanded_name and self.n2k_source != new_address:
+            # We have been commanded to set our address
+            self.n2k_source = new_address
+            self.update_address_claim_end_source()
+            self._start_address_claim()
+            self.address_changed = True
+    
     def _get_next_address(self, restart_at_end: bool = False):
-        print("NotImplemented _get_next_address")
+        if self.n2k_source == N2K_NULL_CAN_BUS_ADDRESS:
+            if restart_at_end:
+                # For Null address start at beginning
+                self.n2k_source = 14
+                self.update_address_claim_end_source()
+            else:
+                return
+        elif self.n2k_source != self.address_claim_end_source:
+            self.n2k_source += 1
+            if self.n2k_source > N2K_MAX_CAN_BUS_ADDRESS:
+                self.n2k_source = 0
+        else:
+            # Cannot claim address
+            self.n2k_source = N2K_NULL_CAN_BUS_ADDRESS
 
-    def _is_my_source(self, source: int) -> bool:
-        print("NotImplemented _is_my_source")
-
+        self.address_changed = True
+        return
+    
     def _get_sequence_counter(self, pgn: int):
         if self.pgn_sequence_counters is None:
             # One sequence counter per outbound fast packet PGN plus one for undefined PGNs
@@ -475,19 +530,19 @@ class Node(can.Listener):
                 return value
         self.pgn_sequence_counters.append(pgn)
         return 0
-
+    
     def _get_fast_packet_tx_pgn_count(self) -> int:
         counter = 0
-        for pgn in self.transmit_messages:
+        for pgn in DefaultTransmitMessages + self.transmit_messages:
             if self._is_fast_packet_pgn(pgn):
                 counter += 1
         return counter
-
+    
     # Forward Handling Code Skipped
-
+    
     def _run_message_handlers(self, msg: Message) -> None:
         print("NotImplemented _run_message_handlers")
-
+    
     # ISO Multi Packet Support
     # def _test_handle_tp_message(self, pgn: int, source: int, destination: int) -> bool:
     #     raise NotImplementedError()
@@ -521,24 +576,24 @@ class Node(can.Listener):
     #
     # def _send_pending_tp_messages(self) -> None:
     #     raise NotImplementedError()
-
+    
     # Group Function Support
     # def _copy_progmem_configuration_information_to_local(self) -> None:
     #     raise NotImplementedError()
     #
     # installation_description_changed: bool
-
+    
     def set_n2k_can_msg_buf_size(self, max_n2k_can_msgs: int) -> None:
         self._max_n2k_can_msgs = max_n2k_can_msgs
-
+    
     def set_n2k_can_send_frame_buf_size(self, max_can_send_frames: int) -> None:
         if not self._is_initialized():
             self._max_can_send_frames = max_can_send_frames
-
+    
     def set_n2k_can_receive_frame_buf_size(self, max_can_receive_frames) -> None:
         if not self._is_initialized():
             self._max_can_receive_frames = max_can_receive_frames
-
+    
     # Group Function Support
     # bool IsTxPGN(unsigned long PGN, int iDev=0);
     # const tNMEA2000::tProductInformation * GetProductInformation(int iDev, bool &IsProgMem) const;
@@ -556,7 +611,7 @@ class Node(can.Listener):
     # void GetInstallationDescription2(char *buf, size_t max_len);
     # void GetManufacturerInformation(char *buf, size_t max_len);
     # bool ReadResetInstallationDescriptionChanged();
-
+    
     # TODO: override / extend supported packets
     # // Call these if you wish to override the default message packets supported.  Pointers must be in PROGMEM
     # void SetSingleFrameMessages(const unsigned long *_SingleFrameMessages);
@@ -570,7 +625,7 @@ class Node(can.Listener):
     # // With these messages you can extent that list. See example TemperatureMonitor
     # void ExtendTransmitMessages(const unsigned long *_SingleFrameMessages, int iDev=0);
     # void ExtendReceiveMessages(const unsigned long *_FastPacketMessages, int iDev=0);
-
+    
     def send_iso_address_claim(self, destination: int = 0xff, delay: int = 0) -> None:
         """
         Some Devices (Garmin) constantly request information about others on the network.
@@ -583,34 +638,93 @@ class Node(can.Listener):
         if delay > 0:
             self.set_pending_iso_address_claim(delay)
             return
-            
+        
         msg = Message(self.n2k_source)
         msg.destination = destination
-        set_n2k_iso_address_claim(msg, self.device_information.name)
+        set_n2k_iso_address_claim(msg=msg,
+                                  unique_number=self.device_information.unique_number,
+                                  manufacturer_code=self.device_information.manufacturer_code,
+                                  device_function=self.device_information.device_function,
+                                  device_class=self.device_information.device_class,
+                                  device_instance=self.device_information.device_instance,
+                                  system_instance=self.device_information.system_instance,
+                                  industry_group=self.device_information.industry_group)
         self.send_msg(msg)
-
+    
     # ISO Multi Packet Support
     # bool SendProductInformation(unsigned char Destination, int DeviceIndex, bool UseTP);
     # bool SendConfigurationInformation(unsigned char Destination, int DeviceIndex, bool UseTP);
     # void SendTxPGNList(unsigned char Destination, int DeviceIndex, bool UseTP=false);
     # void SendRxPGNList(unsigned char Destination, int DeviceIndex, bool UseTP=false);
-
-    def send_tx_pgn_list(self, destination: int) -> None:
-        print("NotImplemented send_tx_pgn_list")
-
-    def send_rx_pgn_list(self, destination: int) -> None:
-        print("NotImplemented send_rx_pgn_list")
-
-    def send_product_information(self) -> bool:
-        print("NotImplemented send_product_information")
-
-    def send_configuration_information(self) -> bool:
-        print("NotImplemented send_configuration_information")
-
+    
+    def send_tx_pgn_list(self, destination: int) -> None:  # todo: use_tp
+        msg = Message(self.n2k_source)
+        msg.destination = destination
+        msg.pgn = PGN.SupportedPGNList
+        msg.priority = 6
+        # msg.tp_message = use_tp
+        msg.add_byte(N2kPGNList.transmit)
+        for supported_pgn in DefaultTransmitMessages + self.transmit_messages:
+            msg.add_3_byte_int(supported_pgn)
+        self.send_msg(msg)
+    
+    def send_rx_pgn_list(self, destination: int) -> None:  # todo: use_tp
+        msg = Message(self.n2k_source)
+        msg.destination = destination
+        msg.pgn = PGN.SupportedPGNList
+        msg.priority = 6
+        # msg.tp_message = use_tp
+        msg.add_byte(N2kPGNList.receive)
+        for supported_pgn in DefaultReceiveMessages + self.receive_messages:
+            msg.add_3_byte_int(supported_pgn)
+        self.send_msg(msg)
+    
+    def send_product_information(self, destination: int = 0xff) -> bool:  # use_tp: bool = False
+        msg = Message(self.n2k_source)
+        msg.destination = destination
+        # msg.tp_message = use_tp
+        msg.pgn = PGN.ProductInformation
+        set_n2k_product_information(msg=msg,
+                                    n2k_version=self.product_information.n2k_version,
+                                    product_code=self.product_information.product_code,
+                                    model_id=self.product_information.n2k_model_id,
+                                    sw_code=self.product_information.n2k_sw_code,
+                                    model_version=self.product_information.n2k_model_version,
+                                    model_serial_code=self.product_information.n2k_model_serial_code,
+                                    certification_level=self.product_information.certification_level,
+                                    load_equivalency=self.product_information.load_equivalency)
+        if self.send_msg(msg):
+            self.clear_pending_product_information()
+            return True
+        self.set_pending_product_information()
+        return False
+    
+    def send_configuration_information(self, destination = 0xff) -> bool: #  use_tp: bool = False
+        msg = Message(self.n2k_source)
+        msg.destination = destination
+        # msg.tp_message = ust_tp
+        if self.configuration_information.manufacturer_information == "" and \
+                self.configuration_information.installation_description1 == "" and \
+                self.configuration_information.installation_description2 == "":
+            # No information provided
+            set_n2k_pgn_iso_acknowledgement(msg, 1, 0xff, PGN.ConfigurationInformation)
+        else:
+            set_n2k_configuration_information(
+                msg=msg,
+                manufacturer_information=self.configuration_information.manufacturer_information,
+                installation_description1=self.configuration_information.installation_description1,
+                installation_description2=self.configuration_information.installation_description2,
+            )
+        if self.send_msg(msg):
+            self.clear_pending_configuration_information()
+            return True
+        self.set_pending_configuration_information()
+        return False
+    
     # Heartbeat Support
     def send_heartbeat(self, force: bool = False):
         print("NotImplemented send_heartbeat")
-
+    
     # Send message to the bus
     def send_msg(self, msg: Message) -> bool:
         result = False
@@ -657,19 +771,19 @@ class Node(can.Listener):
                     break
         
         return result
-
+    
     def attach_msg_handler(self, msg_handler: MessageHandler) -> None:
         self.message_handlers.add(msg_handler)
-
+    
     def detach_msg_handler(self, msg_handler: MessageHandler) -> None:
         self.message_handlers.remove(msg_handler)
-
+    
     def set_iso_request_handler(self, request_handler: Callable[[int, int], bool]) -> None:
         self._request_handler = request_handler
-
+    
     def remove_iso_request_handler(self) -> None:
         self._request_handler = None
-
+    
     # Group Function Support
     # def add_group_function_handler(self, group_function_handler: GroupFunctionHandler) -> None:
     #     raise NotImplementedError()

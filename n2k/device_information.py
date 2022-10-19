@@ -1,12 +1,12 @@
 class DeviceInformation:
     unique_number: int  # 21 bits
     manufacturer_code: int  # 11 bits
-    device_instance: int  # 8 bits
+    device_instance: int = 0  # 8 bits
     device_function: int  # 8 bits
     device_class: int  # 8 bits
     # https://github.com/ttlappalainen/NMEA2000/blob/master/src/NMEA2000.h#L133
-    system_instance: int  # 4 bits
-    industry_group: int  # 4 bits (actually 3 bits but the upper is always set)
+    system_instance: int = 0  # 4 bits
+    industry_group: int = 4  # 4 bits (actually 3 bits but the upper is always set)
     
     @property
     def name(self) -> int:
