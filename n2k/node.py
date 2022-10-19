@@ -266,11 +266,12 @@ class Node(can.Listener):
         self.device_information.device_function = device_function
         self.device_information.device_class = device_class
         """
-        1 - On-Highway Equipment\n
-        2 - Agricultural and Forestry Equipment\n
-        3 - Construction Equipment\n
-        4 - Marine Equipment\n
-        5 - Industrial, Process Control, Stationary Equipment\n
+        0 - Global
+        1 - On-Highway Equipment
+        2 - Agricultural and Forestry Equipment
+        3 - Construction Equipment
+        4 - Marine Equipment
+        5 - Industrial, Process Control, Stationary Equipment
         """
         self.device_information.industry_group = 4
         # TODO: device_instance, system_instance
