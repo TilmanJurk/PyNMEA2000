@@ -748,7 +748,7 @@ class Node(can.Listener):
         if self._is_address_claim_started() and msg.pgn != PGN.IsoAddressClaim:
             return False
         
-        if msg.data_len <= 8 and self._is_fast_packet(msg):
+        if msg.data_len <= 8 and not self._is_fast_packet(msg):
             # Can be sent as a single packet
             result = self._send_frame(can_id, msg.data_len, msg.data)
         else:
