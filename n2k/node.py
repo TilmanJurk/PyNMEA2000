@@ -301,7 +301,7 @@ class Node(can.Listener):
     
     # TODO: Message Handler for normal messages
     # TODO: Message Handler for request messages
-    _request_handler: Optional[Callable[[int, int], bool]]
+    _request_handler: Optional[Callable[[int, int], bool]] = None
     
     # TODO: Message Handler for group functions
     

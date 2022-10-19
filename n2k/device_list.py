@@ -301,8 +301,9 @@ class DeviceList(MessageHandler):
         :param source: Address of NMEA2000 Device.
         :return: Whether message was sent successfully.
         """
-        # TODO
-        print("NotImplemented _request_product_information")
+        msg = Message()
+        n2k.messages.set_n2k_pgn_iso_request(msg, source, PGN.ProductInformation)
+        return self._node.send_msg(msg)
     
     def _request_configuration_information(self, source: int) -> bool:
         """
@@ -311,8 +312,9 @@ class DeviceList(MessageHandler):
         :param source: Address of NMEA2000 Device.
         :return: Whether message was sent successfully.
         """
-        # TODO
-        print("NotImplemented, _request_configuration_information")
+        msg = Message()
+        n2k.messages.set_n2k_pgn_iso_request(msg, source, PGN.ConfigurationInformation)
+        return self._node.send_msg(msg)
     
     def _request_supported_pgn_list(self, source: int) -> bool:
         """
@@ -321,8 +323,9 @@ class DeviceList(MessageHandler):
         :param source: Address of NMEA2000 Device.
         :return: Whether message was sent successfully.
         """
-        # TODO
-        print("NotImplemented, _request_supported_pgn_list")
+        msg = Message()
+        n2k.messages.set_n2k_pgn_iso_request(msg, source, PGN.SupportedPGNList)
+        return self._node.send_msg(msg)
     
     def _request_iso_address_claim(self, source: int) -> bool:
         """
