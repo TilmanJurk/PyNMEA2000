@@ -12,6 +12,7 @@ from .n2k import PGN
 from .node import Node
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.WARNING)
 
 
 def set_log_level(level: int):
@@ -29,7 +30,7 @@ def set_log_level(level: int):
 
 debug_console_handler = logging.StreamHandler()
 debug_console_handler.setFormatter(logging.Formatter(
-    "[{asctime:s}] - {levelname:<8s} - {name:s} - {module:s}.{filename:s}:{lineno:d}->{funcname:s}\n" +
+    "[{asctime:s}] - {levelname:<8s} - {name:s} - {filename:s}:{lineno:d}->{funcName:s}\n" +
     "" * (23+3) + "{message:s}",
     style="{"
 ))
