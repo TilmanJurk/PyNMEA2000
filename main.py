@@ -17,9 +17,9 @@ n2k_node = n2k.Node(bus, device_information)
 n2k_node.set_product_information("Test", "0.0.1", "Dev", "00000000001", 2)
 n2k_node.set_configuration_information()
 
-n2k.set_log_level(logging.DEBUG)
+# n2k.set_log_level(logging.DEBUG)
 
-notifier.add_listener(print)
+# notifier.add_listener(print)
 notifier.add_listener(n2k_node)
 
 while True:
