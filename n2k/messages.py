@@ -3,104 +3,12 @@ from typing import NamedTuple, List, Optional
 
 from n2k.device_information import DeviceInformation
 from n2k.n2k import PGN
-from n2k.message import n2k_double_is_na, Message
+from n2k.message import Message
 from n2k.types import N2kTimeSource, N2kAISRepeat, N2kAISTransceiverInformation, N2kMOBStatus, N2kMOBPositionSource, \
     N2kHeadingReference, N2kMOBEmitterBatteryStatus, N2kOnOff, N2kSteeringMode, N2kTurnMode, N2kRudderDirectionOrder, \
     ProductInformation, ConfigurationInformation, N2kWindReference
 from n2k.constants import *
 from n2k.utils import IntRef
-
-
-def rad_to_deg(v: float) -> float:
-    if n2k_double_is_na(v):
-        return v
-    return math.degrees(v)
-
-
-def deg_to_rad(v: float) -> float:
-    if n2k_double_is_na(v):
-        return v
-    return math.radians(v)
-
-
-def c_to_kelvin(v: float) -> float:
-    if n2k_double_is_na(v):
-        return v
-    return v + 273.15
-
-
-def kelvin_to_c(v: float) -> float:
-    if n2k_double_is_na(v):
-        return v
-    return v - 273.15
-
-
-def f_to_kelvin(v: float) -> float:
-    if n2k_double_is_na(v):
-        return v
-    return (v - 32) * 5.0 / 9.0 + 273.15
-
-
-def kelvin_to_f(v: float) -> float:
-    if n2k_double_is_na(v):
-        return v
-    return (v - 273.15) * 9.0 / 4.0 + 32
-
-
-def mbar_to_pascal(v: float) -> float:
-    if n2k_double_is_na(v):
-        return v
-    return v * 100
-
-
-def pascal_to_mbar(v: float) -> float:
-    if n2k_double_is_na(v):
-        return v
-    return v / 1000
-
-
-def hpa_to_pascal(v: float) -> float:
-    return mbar_to_pascal(v)
-
-
-def pascal_to_hpa(v: float) -> float:
-    return pascal_to_mbar(v)
-
-
-def ah_to_coulomb(v: float) -> float:
-    if n2k_double_is_na(v):
-        return v
-    return v * 3600
-
-
-def coulomb_to_ah(v: float) -> float:
-    if n2k_double_is_na(v):
-        return v
-    return v / 3600
-
-
-def hours_to_seconds(v: float) -> float:
-    if n2k_double_is_na(v):
-        return v
-    return v * 3600
-
-
-def seconds_to_hours(v: float) -> float:
-    if n2k_double_is_na(v):
-        return v
-    return v / 3600
-
-
-def meters_per_second_to_knots(v: float) -> float:
-    if n2k_double_is_na(v):
-        return v
-    return v * 3600 / 1852
-
-
-def knots_to_meters_per_second(v: float) -> float:
-    if n2k_double_is_na(v):
-        return v
-    return v * 1852 / 3600
 
 
 class SystemTime(Message):

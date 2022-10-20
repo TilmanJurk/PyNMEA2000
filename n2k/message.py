@@ -9,50 +9,6 @@ from n2k.stream import Stream
 from n2k.constants import *
 
 
-def n2k_double_is_na(v: float) -> bool:
-    return v == N2K_DOUBLE_NA
-
-
-def n2k_float_is_na(v: float) -> bool:
-    return v == N2K_FLOAT_NA
-
-
-def n2k_uint8_is_na(v: float) -> bool:
-    return v == N2K_UINT8_NA
-
-
-def n2k_int8_is_na(v: float) -> bool:
-    return v == N2K_INT8_NA
-
-
-def n2k_uint16_is_na(v: float) -> bool:
-    return v == N2K_UINT16_NA
-
-
-def n2k_int16_is_na(v: float) -> bool:
-    return v == N2K_INT16_NA
-
-
-def n2k_uint32_is_na(v: float) -> bool:
-    return v == N2K_UINT32_NA
-
-
-def n2k_int32_is_na(v: float) -> bool:
-    return v == N2K_INT32_NA
-
-
-def n2k_uint64_is_na(v: float) -> bool:
-    return v == N2K_UINT64_NA
-
-
-def n2k_int64_is_na(v: float) -> bool:
-    return v == N2K_INT64_NA
-
-
-# TODO: Buffer set functions?
-# TODO: Buffer get functions?
-
-
 # WARNING: The round method employed by python differs from the one written in the ported C code
 #  However this is the correct method for IEEE floating point numbers
 #  https://en.wikipedia.org/wiki/Rounding#Round_half_to_even
