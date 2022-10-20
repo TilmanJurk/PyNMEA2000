@@ -330,7 +330,7 @@ class Message:
         length = 3
         if index.value + length >= self.data_len:
             return default
-        v = struct.unpack("<I", self.data[index.value:index.value + length])[0]
+        v = struct.unpack("<I", self.data[index.value:index.value + length]+b'\x00')[0]
         index.value += length
         return v
 
@@ -338,7 +338,7 @@ class Message:
         length = 3
         if index.value + length >= self.data_len:
             return default
-        v = struct.unpack("<i", self.data[index.value:index.value + length])[0]
+        v = struct.unpack("<i", self.data[index.value:index.value + length]+b'\x00')[0]
         index.value += length
         return v
     
