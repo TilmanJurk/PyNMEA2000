@@ -1,3 +1,4 @@
+import math
 from typing import NamedTuple, List, Optional
 
 from n2k.device_information import DeviceInformation
@@ -11,53 +12,48 @@ from n2k.utils import IntRef
 
 
 # System Date/Time (PGN 126992)
-class SystemTime(Message):
+def set_n2k_system_time(sid: int, system_date: int, system_time: float,
+                        time_source: N2kTimeSource = N2kTimeSource.GPS) -> Message:
+    """
+    Generate NMEA2000 message containing specified System Date/Time (PGN 126992). System Time is in UTC.
+    
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        different messages to indicate that they are measured at same time
+    :param system_date: Days since 1970-01-01
+    :param system_time: seconds since midnight
+    :param time_source: Time source, see :py:class:`n2k_types.N2kTimeSource`
+    :return: NMEA2000 message ready to be sent.
+    """
+    msg = Message()
+    msg.pgn = PGN.SystemDateTime
+    msg.priority = 3
+    msg.add_byte_uint(sid)
+    msg.add_byte_uint((time_source & 0x0f) | 0xf0)
+    msg.add_2_byte_uint(system_date)
+    msg.add_4_byte_double(system_time, 1e-4)
+
+
+class SystemTime(NamedTuple):
     sid: int
     system_date: int
     system_time: float
     time_source: N2kTimeSource
 
-    def __init__(self):
-        super().__init__()
-        self.pgn = PGN.SystemDateTime
-        self.priority = 3
 
-    @classmethod
-    def from_values(cls, sid: int, system_date: int, system_time: float,
-                    time_source: N2kTimeSource = N2kTimeSource.GPS) -> 'SystemTime':
-        """
-        Generate NMEA2000 message containing specified System Date/Time (PGN 126992). System Time is in UTC.
-
-        :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
-            different messages to indicate that they are measured at same time
-        :param system_date: Days since 1970-01-01
-        :param system_time: seconds since midnight
-        :param time_source: Time source, see :py:class:`n2k_types.N2kTimeSource`
-        :return: NMEA2000 message ready to be sent.
-        """
-        msg = cls()
-        msg.add_byte_uint(sid)
-        msg.add_byte_uint((time_source & 0x0f) | 0xf0)
-        msg.add_2_byte_uint(system_date)
-        msg.add_4_byte_double(system_time, 1e-4)
-        return msg
-        
-    @classmethod
-    def from_can(cls, buf: bytearray) -> 'SystemTime':
-        """
-        Parse current system time from a PGN 126992 message
-
-        :param buf: data bytes (already combined if sent via multiple frames)
-        :return: SystemTime Message Object containing the parsed information
-        """
-        msg = cls()
-        msg.data = buf
-        index = IntRef(0)
-        msg.sid = msg.get_byte_uint(index)
-        msg.time_source = N2kTimeSource(msg.get_byte_uint(index) & 0x0f)
-        msg.system_date = msg.get_2_byte_uint(index)
-        msg.system_date = msg.get_4_byte_udouble(0.0001, index)
-        return msg
+def parse_n2k_system_time(msg: Message) -> SystemTime:
+    """
+    Parse current system time from a PGN 126992 message
+    
+    :param msg: NMEA2000 Message with PGN 126992
+    :return: Dictionary containing the parsed information.
+    """
+    index = IntRef(0)
+    return SystemTime(
+        sid=msg.get_byte_uint(index),
+        time_source=N2kTimeSource(msg.get_byte_uint(index) & 0x0f),
+        system_date=msg.get_2_byte_uint(index),
+        system_time=msg.get_4_byte_udouble(0.0001, index)
+    )
 
 
 # AIS Safety Related Broadcast Message (PGN 129802)
