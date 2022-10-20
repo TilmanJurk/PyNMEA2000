@@ -1,4 +1,5 @@
 from time import time
+import math
 from n2k.constants import *
 
 
