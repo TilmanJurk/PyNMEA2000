@@ -93,7 +93,7 @@ class Message:
 
         s += "pgn=" + str(pgn) + ","
         s += "msg_time=" + str(self.msg_time) + ","
-        s += "data=" + str(hexlify(self.data)) + ","
+        s += "data=" + str(hexlify(self.data, sep=" ")) + ","
         s += "data_len=" + str(self.data_len) + ","
         return s
 
@@ -220,7 +220,7 @@ class Message:
         encoded = v.encode("utf-8")[:length]
         for b in encoded:
             self.add_byte_uint(b)
-        # fill up to length using 0xff
+        # fill up to length using 0xff. Garmin instead uses 0x00 to fill but both seems to work.
         for b in range(length - len(encoded)):
             self.add_byte_uint(0xff)
     

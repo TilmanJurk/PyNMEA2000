@@ -183,7 +183,7 @@ class DeviceList(MessageHandler):
         # where we are in the binary data
         index: IntRef = IntRef(0)
         # Parse if this is a list of receivable or transmittable PGNs
-        n2k_pgn_list: N2kPGNList = N2kPGNList(msg.get_byte(index))
+        n2k_pgn_list: N2kPGNList = N2kPGNList(msg.get_byte_uint(index))
         # Each PGN takes up 3 bytes. If we get a remainder something is wrong with the data.
         pgn_count, rem = divmod(msg.data_len - index, 3)
         assert rem == 0

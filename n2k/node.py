@@ -1,12 +1,15 @@
+import struct
 from collections import deque
+from binascii import hexlify
 
 import traceback
 import can
 from typing import Optional, List, Callable, Set, Deque
 
-from n2k import DeviceList
+import n2k
 from n2k.can_message_buffer import N2kCANMessageBuffer
 from n2k.can_tools import can_id_to_n2k, n2k_id_to_can
+from n2k.device_list import DeviceList
 from n2k.device_information import DeviceInformation
 from n2k.message import Message
 from n2k.message_handler import MessageHandler
@@ -318,12 +321,13 @@ class Node(can.Listener):
         can_msg = can.message.Message(arbitration_id=frame_id, data=buf, dlc=length)
         try:
             self.bus.send(can_msg)
+            n2k.log.debug("Sent Frame:", hex(frame_id), length, hexlify(buf, sep=" "))
         except can.CanOperationError:
             if len(self._can_send_frame_buf) < self._max_can_send_frames:
-                # Todo: log that we buffered the message
+                n2k.log.debug("Buffered Frame:", hex(frame_id), length, hexlify(buf, sep=" "))
                 self._can_send_frame_buf.append(can_msg)
             else:
-                # Todo: log that we failed to send frame and couldn't even store it on the buffer to be retried
+                n2k.log.warning("Failed to send Frame:", hex(frame_id), length, hexlify(buf, sep=" "))
                 pass
             return False
         return True
@@ -490,7 +494,7 @@ class Node(can.Listener):
             return
         index = IntRef(0)
         commanded_name = msg.get_uint_64(index)
-        new_address = msg.get_byte(index)
+        new_address = msg.get_byte_uint(index)
         if new_address >= 252:
             return
         if self.device_information.name == commanded_name and self.n2k_source != new_address:
@@ -733,6 +737,8 @@ class Node(can.Listener):
     # Send message to the bus
     def send_msg(self, msg: Message) -> bool:
         result = False
+
+        n2k.log.debug("Sending Message:", msg)
         
         msg.check_destination()
         msg.source = self.n2k_source
