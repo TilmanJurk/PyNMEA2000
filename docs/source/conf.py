@@ -20,7 +20,15 @@ author = 'Finn Böger'
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'sphinx_autodoc_typehints']
 
 autodoc_default_flags = ['members', 'undoc-members', 'private-members', 'special-members', 'inherited-members', 'show-inheritance']
-autodoc_member_order = 'bysource'
+autodoc_default_options = {
+    'members': True,
+    'member-order': 'bysource',
+    'special-members': '__init__',
+    'undoc-members': True,
+    'exclude-members': None,
+    'show-inheritance': True,
+    'private-members': None,
+}
 templates_path = ['_templates']
 exclude_patterns = []
 
