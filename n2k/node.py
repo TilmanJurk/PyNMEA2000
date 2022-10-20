@@ -760,10 +760,11 @@ class Node(can.Listener):
             frames: int = ((msg.data_len-6-1) // 7)+1+1 if msg.data_len > 6 else 1
             order = self._get_sequence_counter(msg.pgn) << 5  # TODO: what is this good for?? gives us 3 bit for the front
             result = True
-            cur = 2
+            cur = 0
             for i in range(frames):
-                buf = bytearray(i | order)
+                buf = bytearray([i | order])
                 if i == 0:
+                    buf.extend(struct.pack("<B", msg.data_len))
                     buf.extend(msg.data[cur:cur+6])
                     cur += 6
                 else:
