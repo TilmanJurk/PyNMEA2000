@@ -6,7 +6,7 @@ from n2k.n2k import PGN
 from n2k.message import n2k_double_is_na, Message
 from n2k.types import N2kTimeSource, N2kAISRepeat, N2kAISTransceiverInformation, N2kMOBStatus, N2kMOBPositionSource, \
     N2kHeadingReference, N2kMOBEmitterBatteryStatus, N2kOnOff, N2kSteeringMode, N2kTurnMode, N2kRudderDirectionOrder, \
-    ProductInformation, ConfigurationInformation
+    ProductInformation, ConfigurationInformation, N2kWindReference
 from n2k.constants import *
 from n2k.utils import IntRef
 
@@ -124,7 +124,7 @@ def set_n2k_system_time(sid: int, system_date: int, system_time: float,
     """
     Generate NMEA2000 message containing specified System Date/Time (PGN 126992). System Time is in UTC.
     
-    :param sid: Sequence ID. If your device is e.g. boat speed and heading at same time, you can set same SID for
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
         different messages to indicate that they are measured at same time
     :param system_date: Days since 1970-01-01
     :param system_time: seconds since midnight
@@ -196,8 +196,8 @@ def set_n2k_mob_notification(sid: int, mob_emitter_id: int, mob_status: N2kMOBSt
     """
     Generate NMEA2000 message containing Man Overboard Notification (PGN 127233)
     
-    :param sid: Sequence ID. If your device is e.g. boat speed and heading at same time, you can set same SID for
-        different messages to indicate that they are measured at same time.
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        for different messages to indicate that they are measured at same time.
     :param mob_emitter_id: Identifier for each MOB emitter, unique to the vessel
     :param mob_status: MOB Status, see :py:class:`n2k_types.N2kMOBStatus`
     :param activation_time: Time of day (UTC) in seconds when MOB was initially activated
@@ -349,8 +349,8 @@ def set_n2k_heading(sid: int, heading: float, deviation: float = N2K_DOUBLE_NA, 
     If the true heading is used, leave the deviation and variation undefined. Else if the magnetic heading is sent,
     specify the magnetic deviation and variation.
     
-    :param sid: Sequence ID. If your device is e.g. boat speed and heading at same time, you can set same SID for
-        different messages to indicate that they are measured at same time.
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        for different messages to indicate that they are measured at same time.
     :param heading: Heading in radians
     :param deviation: Magnetic deviation in radians. Use `N2K_DOUBLE_NA` for undefined value.
     :param variation: Magnetic variation in radians. Use `N2K_DOUBLE_NA` for undefined value.
@@ -554,7 +554,47 @@ def n2k_set_status_binary_on_status(bank_status: N2kBinaryStatus, item_status: N
 
 
 # Wind Speed (PGN 130306)
-# TODO
+def set_n2k_wind_speed(sid: int, wind_speed: float, wind_angle: float, wind_reference: N2kWindReference) -> Message:
+    """
+    Wind Speed (PGN 130306)
+
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        for different messages to indicate that they are measured at same time.
+    :param wind_speed: Wind Speed in meters per second
+    :param wind_angle: Wind Angle in radians
+    :param wind_reference: Can be e.g. Theoretical Wind using True North or Magnetic North,
+        Apparent Wind as measured, ...\n
+        See :py:class:`n2k.types.N2kWindReference`
+    :return: NMEA2000 message ready to be sent.
+    """
+    msg = Message()
+    msg.pgn = PGN.WindSpeed
+    msg.priority = 2
+    msg.add_byte_uint(sid)
+    msg.add_2_byte_udouble(wind_speed, 0.01)
+    msg.add_2_byte_udouble(wind_angle, 0.0001)
+    msg.add_byte_uint(wind_reference)
+    msg.add_byte_uint(0xff)  # Reserved
+    msg.add_byte_uint(0xff)  # Reserved
+    return msg
+
+
+class WindSpeed(NamedTuple):
+    sid: int
+    heading: float
+    deviation: float
+    variation: float
+    ref: N2kHeadingReference
+
+
+def parse_n2k_wind_speed(msg: Message) -> WindSpeed:
+    """
+    Parse heading information from a PGN 127250 message
+
+    :param msg: NMEA2000 Message with PGN 127250
+    :return: Dictionary containing the parsed information
+    """
+    print("NotImplemented, parse_n2k_heading")
 
 
 # Outside Environmental parameters (PGN 130310)
