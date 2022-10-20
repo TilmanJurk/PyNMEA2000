@@ -631,7 +631,7 @@ def set_n2k_iso_address_claim_by_name(msg: Message, name: int) -> None:
 def set_n2k_product_information(msg: Message, n2k_version: int, product_code: int, model_id: str, sw_code: str,
                                 model_version: str, model_serial_code: str, certification_level: int = 1,
                                 load_equivalency: int = 1) -> None:
-    msg.pgn = PGN.ProductInformation,
+    msg.pgn = PGN.ProductInformation
     msg.priority = 6
     msg.add_2_byte_uint(n2k_version)
     msg.add_2_byte_uint(product_code)
