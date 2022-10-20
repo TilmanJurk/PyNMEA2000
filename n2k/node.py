@@ -429,10 +429,11 @@ class Node(can.Listener):
             self.send_msg(ack_msg)
     
     def _handle_iso_request(self, msg: Message) -> None:
-        if not (is_broadcast(msg.destination) or msg.destination == self.n2k_source):
-            requested_pgn = parse_n2k_pgn_iso_request(msg)
-            if requested_pgn is not None:
-                self._respond_iso_request(msg, requested_pgn)
+        if not is_broadcast(msg.destination) and msg.destination != self.n2k_source:
+            return
+        requested_pgn = parse_n2k_pgn_iso_request(msg)
+        if requested_pgn is not None:
+            self._respond_iso_request(msg, requested_pgn)
     
     #  TOOD
     # def _respond_group_function(self, msg: N2kMessage, group_function_code: GroupFunctionCode, pgn_for_group_function: int) -> None:
