@@ -321,13 +321,13 @@ class Node(can.Listener):
         can_msg = can.message.Message(arbitration_id=frame_id, data=buf, dlc=length)
         try:
             self.bus.send(can_msg)
-            n2k.log.debug("Sent Frame:", hex(frame_id), length, hexlify(buf, sep=" "))
+            n2k.log.debug("Sent Frame: " + hex(frame_id) + " " + str(length) + " " + str(hexlify(buf, sep=" ")))
         except can.CanOperationError:
             if len(self._can_send_frame_buf) < self._max_can_send_frames:
-                n2k.log.debug("Buffered Frame:", hex(frame_id), length, hexlify(buf, sep=" "))
+                n2k.log.debug("Buffered Frame: " + hex(frame_id) + " " + str(length) + " " + str(hexlify(buf, sep=" ")))
                 self._can_send_frame_buf.append(can_msg)
             else:
-                n2k.log.warning("Failed to send Frame:", hex(frame_id), length, hexlify(buf, sep=" "))
+                n2k.log.warning("Failed to send Frame: " + hex(frame_id) + " " + str(length) + " " + str(hexlify(buf, sep=" ")))
                 pass
             return False
         return True
@@ -738,7 +738,7 @@ class Node(can.Listener):
     def send_msg(self, msg: Message) -> bool:
         result = False
 
-        n2k.log.debug("Sending Message:", msg)
+        n2k.log.debug("Sending Message: " + str(msg))
         
         msg.check_destination()
         msg.source = self.n2k_source
