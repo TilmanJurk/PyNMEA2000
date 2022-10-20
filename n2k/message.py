@@ -237,7 +237,7 @@ class Message:
     # Data Retrieval
     def get_float(self, index: IntRef, default: float = N2K_FLOAT_NA) -> float:
         length = 4
-        if index.value + length >= self.data_len:
+        if index.value + length > self.data_len:
             return default
         if struct.unpack("<i", self.data[index.value:index.value + length])[0] == N2K_INT32_NA:
             index.value += length
@@ -296,7 +296,7 @@ class Message:
 
     def get_byte_uint(self, index: IntRef) -> int:
         length = 1
-        if index.value + length >= self.data_len:
+        if index.value + length > self.data_len:
             return N2K_UINT8_NA
         v = struct.unpack("<B", self.data[index.value:index.value + length])[0]
         index.value += length
@@ -304,7 +304,7 @@ class Message:
 
     def get_byte_int(self, index: IntRef) -> int:
         length = 1
-        if index.value + length >= self.data_len:
+        if index.value + length > self.data_len:
             return N2K_INT8_NA
         v = struct.unpack("<b", self.data[index.value:index.value+length])[0]
         index.value += length
@@ -312,7 +312,7 @@ class Message:
 
     def get_2_byte_uint(self, index: IntRef, default: int = N2K_UINT16_NA) -> int:
         length = 2
-        if index.value + length >= self.data_len:
+        if index.value + length > self.data_len:
             return default
         v = struct.unpack("<H", self.data[index.value:index.value + length])[0]
         index.value += length
@@ -320,7 +320,7 @@ class Message:
 
     def get_2_byte_int(self, index: IntRef, default: int = N2K_INT16_NA) -> int:
         length = 2
-        if index.value + length >= self.data_len:
+        if index.value + length > self.data_len:
             return default
         v = struct.unpack("<h", self.data[index.value:index.value + length])[0]
         index.value += length
@@ -328,7 +328,7 @@ class Message:
 
     def get_3_byte_uint(self, index: IntRef, default: int = N2K_UINT24_NA) -> int:
         length = 3
-        if index.value + length >= self.data_len:
+        if index.value + length > self.data_len:
             return default
         v = struct.unpack("<I", self.data[index.value:index.value + length]+b'\x00')[0]
         index.value += length
@@ -336,7 +336,7 @@ class Message:
 
     def get_3_byte_int(self, index: IntRef, default: int = N2K_INT24_NA) -> int:
         length = 3
-        if index.value + length >= self.data_len:
+        if index.value + length > self.data_len:
             return default
         v = struct.unpack("<i", self.data[index.value:index.value + length]+b'\x00')[0]
         index.value += length
@@ -344,7 +344,7 @@ class Message:
     
     def get_4_byte_uint(self, index: IntRef, default: int = N2K_UINT32_NA) -> int:
         length = 4
-        if index.value + length >= self.data_len:
+        if index.value + length > self.data_len:
             return default
         v = struct.unpack("<I", self.data[index.value:index.value + length])[0]
         index.value += length
@@ -352,7 +352,7 @@ class Message:
 
     def get_4_byte_int(self, index: IntRef, default: int = N2K_UINT32_NA) -> int:
         length = 4
-        if index.value + length >= self.data_len:
+        if index.value + length > self.data_len:
             return default
         v = struct.unpack("<i", self.data[index.value:index.value + length])[0]
         index.value += length
@@ -360,7 +360,7 @@ class Message:
     
     def get_uint_64(self, index: IntRef, default: int = N2K_UINT64_NA) -> int:
         length = 8
-        if index.value + length >= self.data_len:
+        if index.value + length > self.data_len:
             return default
         v = struct.unpack("<Q", self.data[index.value:index.value + length])[0]
         index.value += length
@@ -368,7 +368,7 @@ class Message:
 
     def get_8_byte_int(self, index: IntRef, default: int = N2K_INT64_NA) -> int:
         length = 8
-        if index.value + length >= self.data_len:
+        if index.value + length > self.data_len:
             return default
         v = struct.unpack("<q", self.data[index.value:index.value + length])[0]
         index.value += length
