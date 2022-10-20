@@ -2,10 +2,6 @@
 from enum import IntEnum
 
 
-def combine_unique_number_and_manufacturer_code(unique_number: int, manufacturer_code: int) -> int:
-    return (manufacturer_code & 0x7ff) << 21 | (unique_number & 0x1fffff)
-
-
 def is_broadcast(source: int) -> bool:
     return source == 0xff
 

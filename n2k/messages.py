@@ -1,9 +1,9 @@
 import math
 from typing import NamedTuple, List, Optional
 
-from n2k.n2k import PGN, combine_unique_number_and_manufacturer_code
-from n2k.message import n2k_double_is_na, Message, N2K_DOUBLE_NA
-from n2k.can_message import N2kCANMessage
+from n2k.device_information import DeviceInformation
+from n2k.n2k import PGN
+from n2k.message import n2k_double_is_na, Message
 from n2k.types import N2kTimeSource, N2kAISRepeat, N2kAISTransceiverInformation, N2kMOBStatus, N2kMOBPositionSource, \
     N2kHeadingReference, N2kMOBEmitterBatteryStatus, N2kOnOff, N2kSteeringMode, N2kTurnMode, N2kRudderDirectionOrder, \
     ProductInformation, ConfigurationInformation
@@ -613,18 +613,22 @@ def set_n2k_pgn_iso_acknowledgement(msg: Message, control: int, group_function: 
 def set_n2k_iso_address_claim(msg: Message, unique_number: int, manufacturer_code: int, device_function: int,
                               device_class: int, device_instance: int = 0, system_instance: int = 0,
                               industry_group: int = 4) -> None:
-    msg.pgn = PGN.IsoAddressClaim
-    msg.priority = 6
+    device_information = DeviceInformation()
+    device_information.unique_number = unique_number
+    device_information.manufacturer_code = manufacturer_code
+    device_information.device_function = device_function
+    device_information.device_class = device_class
+    device_information.device_instance = device_instance
+    device_information.system_instance = system_instance
+    device_information.industry_group = industry_group
 
-    msg.add_4_byte_uint(combine_unique_number_and_manufacturer_code(unique_number, manufacturer_code))
-    msg.add_byte_uint(device_instance)
-    msg.add_byte_uint(device_function)
-    msg.add_byte_uint((device_class & 0x7f) << 1)
-    msg.add_byte_uint(0x80 | ((industry_group & 0x7) << 4) | (system_instance & 0x0f))
+    set_n2k_iso_address_claim_by_name(msg, device_information.name)
 
 
 def set_n2k_iso_address_claim_by_name(msg: Message, name: int) -> None:
-    print("NotImplemented set_n2k_iso_address_claim_by_name")
+    msg.pgn = PGN.IsoAddressClaim
+    msg.priority = 6
+    msg.add_uint_64(name)
 
 
 # Product Information (PGN 126996)
