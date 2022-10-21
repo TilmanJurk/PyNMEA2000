@@ -8,8 +8,8 @@ from .device_list import DeviceList
 # from .group_function_default_handlers import ?
 from .message import Message
 from .message_handler import MessageHandler
-import n2k.messages
-import n2k.types
+from . import messages
+from . import types
 from .n2k import PGN
 from .node import Node
 
