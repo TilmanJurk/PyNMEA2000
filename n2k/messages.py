@@ -16,6 +16,7 @@ def set_n2k_system_time(sid: int, system_date: int, system_time: float,
                         time_source: N2kTimeSource = N2kTimeSource.GPS) -> Message:
     """
     Generate NMEA2000 message containing specified System Date/Time (PGN 126992). System Time is in UTC.
+    # TODO: check if seconds since midnight is UTC or timezone specific
     
     :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
         different messages to indicate that they are measured at same time
@@ -533,6 +534,7 @@ def parse_n2k_cog_sog_rapid(msg: Message) -> CogSogRapid:
 
 
 # GNSS Position Data (PGN 129029)
+# TODO: check if seconds since midnight is UTC or timezone specific
 def set_n2k_gnss_data(sid: int, days_since_1970: int, seconds_since_midnight: float,
                       latitude: float, longitude: float, altitude: float,
                       gnss_type: N2kGNSSType, gnss_method: N2kGNSSMethod, n_satellites: int, hdop: float, pdop: float,

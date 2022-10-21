@@ -766,7 +766,7 @@ class Node(can.Listener):
             # if msg.tp_message:  # TODO: iso multi packet support
             #     result = self.start_send_tp_message(msg)
             # else:
-            frames: int = ((msg.data_len-6-1) // 7)+1+1 if msg.data_len > 6 else 1
+            frames: int = int((msg.data_len-6-1) // 7)+1+1 if msg.data_len > 6 else 1
             order = self._get_sequence_counter(msg.pgn) << 5  # TODO: what is this good for?? gives us 3 bit for the front
             result = True
             cur = 0
