@@ -6,7 +6,7 @@ from n2k.n2k import PGN
 from n2k.message import Message
 from n2k.types import N2kTimeSource, N2kAISRepeat, N2kAISTransceiverInformation, N2kMOBStatus, N2kMOBPositionSource, \
     N2kHeadingReference, N2kMOBEmitterBatteryStatus, N2kOnOff, N2kSteeringMode, N2kTurnMode, N2kRudderDirectionOrder, \
-    ProductInformation, ConfigurationInformation, N2kWindReference
+    ProductInformation, ConfigurationInformation, N2kWindReference, N2kGNSSType, N2kGNSSMethod
 from n2k.constants import *
 from n2k.utils import IntRef
 
@@ -533,7 +533,100 @@ def parse_n2k_cog_sog_rapid(msg: Message) -> CogSogRapid:
 
 
 # GNSS Position Data (PGN 129029)
-# TODO !!!
+def set_n2k_gnss_data(sid: int, days_since_1970: int, seconds_since_midnight: float,
+                      latitude: float, longitude: float, altitude: float,
+                      gnss_type: N2kGNSSType, gnss_method: N2kGNSSMethod, n_satellites: int, hdop: float, pdop: float,
+                      geoidal_separation: float, n_reference_station: int, reference_station_type: Optional[N2kGNSSType],
+                      reference_station_id: Optional[int], age_of_correction: Optional[float]) -> Message:
+    msg = Message()
+    msg.pgn = PGN.GNSSPositionData
+    msg.priority = 3
+    msg.add_byte_uint(sid)
+    msg.add_2_byte_uint(days_since_1970)
+    msg.add_4_byte_udouble(seconds_since_midnight, 0.0001)
+    msg.add_8_byte_double(latitude, 1e-16)
+    msg.add_8_byte_double(longitude, 1e-16)
+    msg.add_8_byte_double(altitude, 1e-6)
+    msg.add_byte_uint((gnss_type & 0x0f) | (gnss_method & 0x0f) << 4)
+    msg.add_byte_uint(1 | 0xfc)  # Integrity byte, reserved 6 bits
+    msg.add_byte_uint(n_satellites)
+    msg.add_2_byte_double(hdop, 0.01)
+    msg.add_2_byte_double(pdop, 0.01)
+    msg.add_4_byte_double(geoidal_separation, 0.01)
+    if 0 < n_reference_station < 0xff:
+        msg.add_byte_uint(1)  # Note that we have values for only one reference station, so pass only one values.
+        msg.add_2_byte_int((reference_station_type & 0x0f) | reference_station_id << 4)
+        msg.add_2_byte_udouble(age_of_correction, 0.01)
+    else:
+        msg.add_byte_uint(n_reference_station)
+    return msg
+
+
+class GNSSPositionData(NamedTuple):
+    sid: int
+    days_since_1970: int
+    seconds_since_midnight: float
+    latitude: float
+    longitude: float
+    altitude: float
+    gnss_type: N2kGNSSType
+    gnss_method: N2kGNSSMethod
+    n_satellites: int
+    hdop: float
+    pdop: float
+    geoidal_separation: float
+    n_reference_station: int
+    reference_station_type: Optional[N2kGNSSType]
+    reference_station_id: Optional[int]
+    age_of_correction: Optional[float]
+
+
+def parse_n2k_gnss_data(msg: Message) -> GNSSPositionData:
+    index = IntRef(0)
+
+    sid = msg.get_byte_uint(index)
+    days_since_1970 = msg.get_2_byte_uint(index)
+    seconds_since_midnight = msg.get_4_byte_udouble(0.0001, index)
+    latitude = msg.get_8_byte_double(1e-16, index)
+    longitude = msg.get_8_byte_double(1e-16, index)
+    altitude = msg.get_8_byte_double(1e-6, index)
+    vb = msg.get_byte_uint(index)
+    gnss_type = N2kGNSSType(vb & 0x0f)
+    gnss_method = N2kGNSSMethod((vb >> 4) & 0x0f)
+    vb = msg.get_byte_uint(index)  # Integrity 2 bit + reserved 6 bit
+    n_satellites = msg.get_byte_uint(index)
+    hdop = msg.get_2_byte_double(0.01, index)
+    pdop = msg.get_2_byte_double(0.01, index)
+    geoidal_separation = msg.get_4_byte_double(0.01, index)
+    n_reference_stations = msg.get_byte_uint(index)
+    reference_station_type = None
+    reference_station_id = None
+    age_of_correction = None
+    if 0 < n_reference_stations < N2K_UINT8_NA:
+        # Note that we return real number of stations, but we only have variables for one.
+        vi = msg.get_2_byte_uint(index)
+        reference_station_type = N2kGNSSType(vi & 0x0f)
+        reference_station_id = vi >> 4
+        age_of_correction = msg.get_2_byte_udouble(0.01, index)
+
+    return GNSSPositionData(
+        sid,
+        days_since_1970,
+        seconds_since_midnight,
+        latitude,
+        longitude,
+        altitude,
+        gnss_type,
+        gnss_method,
+        n_satellites,
+        hdop,
+        pdop,
+        geoidal_separation,
+        n_reference_stations,
+        reference_station_type,
+        reference_station_id,
+        age_of_correction,
+    )
 
 
 # Date,Time & Local offset (PGN 129033, see also PGN 126992)

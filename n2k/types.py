@@ -58,7 +58,7 @@ class N2kXTEMode(IntEnum):
     Manual = 4
 
 
-class N2kGNSStype(IntEnum):
+class N2kGNSSType(IntEnum):
     GPS = 0
     GLONASS = 1
     GPS_GLONASS = 2
@@ -70,7 +70,7 @@ class N2kGNSStype(IntEnum):
     Galileo = 8
 
 
-class N2kGNSSmethod(IntEnum):
+class N2kGNSSMethod(IntEnum):
     noGNSS = 0
     GNSS_fix = 1
     DGNSS = 2
