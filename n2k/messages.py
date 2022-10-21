@@ -262,7 +262,15 @@ def set_n2k_heading(sid: int, heading: float, deviation: float = N2K_DOUBLE_NA, 
     :param ref: Heading reference. Can be true or magnetic.
     :return: NMEA2000 message ready to be sent.
     """
-    print("NotImplemented, set_n2k_heading")
+    msg = Message()
+    msg.pgn = PGN.VesselHeading
+    msg.priority = 2
+    msg.add_byte_uint(sid)
+    msg.add_2_byte_udouble(heading, 0.0001)
+    msg.add_2_byte_double(deviation, 0.0001)
+    msg.add_2_byte_double(variation, 0.0001)
+    msg.add_byte_uint(0xfc | ref)
+    return msg
 
 
 class Heading(NamedTuple):
@@ -280,15 +288,89 @@ def parse_n2k_heading(msg: Message) -> Heading:
     :param msg: NMEA2000 Message with PGN 127250
     :return: Dictionary containing the parsed information
     """
-    print("NotImplemented, parse_n2k_heading")
+
+    index = IntRef(0)
+
+    return Heading(
+        sid=msg.get_byte_uint(index),
+        heading=msg.get_2_byte_udouble(0.0001, index),
+        deviation=msg.get_2_byte_double(0.0001, index),
+        variation=msg.get_2_byte_double(0.0001, index),
+        ref=N2kHeadingReference(msg.get_byte_uint(index) & 0x03)
+    )
 
 
 # Rate of Turn (PGN 127251)
-# TODO
+def set_n2k_rate_of_turn(sid: int, rate_of_turn: float) -> Message:
+    """
+    Rate of Turn (PGN 127251)
+
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        for different messages to indicate that they are measured at same time.
+    :param rate_of_turn: Rate of turn in radians per second
+    :return:
+    """
+    msg = Message()
+    msg.pgn = PGN.RateOfTurn
+    msg.priority = 2
+    msg.add_byte_uint(sid)
+    msg.add_4_byte_double(rate_of_turn, 3.125E-08)  # 1e-6/32.0
+    msg.add_byte_uint(0xff)
+    msg.add_2_byte_uint(0xffff)
+    return msg
+
+
+class RateOfTurn(NamedTuple):
+    sid: int
+    rate_of_turn: float
+
+
+def parse_n2k_rate_of_turn(msg: Message) -> RateOfTurn:
+    index = IntRef(0)
+    return RateOfTurn(
+        sid=msg.get_byte_uint(index),
+        rate_of_turn=msg.get_4_byte_double(3.125E-08, index)  # 1e-6/32.0
+    )
 
 
 # Attitude (PGN 127257)
-# TODO
+def set_n2k_attitude(sid: int, yaw: float, pitch: float, roll: float) -> Message:
+    """
+    Attitude (PGN 127257)
+
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        for different messages to indicate that they are measured at same time.
+    :param yaw: Heading in radians.
+    :param pitch: Pitch in radians. Positive, when your bow rises.
+    :param roll: Roll in radians. Positive, when tilted right.
+    :return: NMEA2000 message ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.Attitude
+    msg.priority = 3
+    msg.add_byte_uint(sid)
+    msg.add_2_byte_double(yaw, 0.0001)
+    msg.add_2_byte_double(pitch, 0.0001)
+    msg.add_2_byte_double(roll, 0.0001)
+    msg.add_byte_uint(0xff)  # Reserved
+    return msg
+
+
+class Attitude(NamedTuple):
+    sid: int
+    yaw: float
+    pitch: float
+    roll: float
+
+
+def parse_n2k_attitude(msg: Message) -> Attitude:
+    index = IntRef(0)
+    return Attitude(
+        sid=msg.get_byte_uint(index),
+        yaw=msg.get_2_byte_double(0.0001, index),
+        pitch=msg.get_2_byte_double(0.0001, index),
+        roll=msg.get_2_byte_double(0.0001, index),
+    )
 
 
 # Magnetic Variation (PGN 127258)
@@ -395,19 +477,67 @@ def n2k_set_status_binary_on_status(bank_status: N2kBinaryStatus, item_status: N
 
 
 # Lat/lon rapid (PGN 129025)
-# TODO
+def set_n2k_lat_long_rapid(latitude: float, longitude: float) -> Message:
+    msg = Message()
+    msg.pgn = PGN.LatLonRapid
+    msg.priority = 2
+    msg.add_4_byte_double(latitude, 1e-7)
+    msg.add_4_byte_double(longitude, 1e-7)
+    return msg
+
+
+class LatLonRapid(NamedTuple):
+    latitude: float
+    longitude: float
+
+
+def parse_n2k_lat_long_rapid(msg: Message) -> LatLonRapid:
+    index = IntRef(0)
+
+    return LatLonRapid(
+        latitude=msg.get_4_byte_double(1e-7, index),
+        longitude=msg.get_4_byte_double(1e-7, index),
+    )
 
 
 # COG SOG rapid (PGN 129026)
-# TODO
+def set_n2k_cog_sog_rapid(sid: int, heading_reference: N2kHeadingReference, cog: float, sog: float) -> Message:
+    msg = Message()
+    msg.pgn = PGN.CogSogRapid
+    msg.priority = 2
+    msg.add_byte_uint(sid)
+    msg.add_byte_uint((heading_reference & 0x03) | 0xfc)
+    msg.add_2_byte_udouble(cog, 0.0001)  # Radians
+    msg.add_2_byte_udouble(sog, 0.01)  # Meters per second
+    msg.add_byte_uint(0xff)  # Reserved
+    msg.add_byte_uint(0xff)  # Reserved
+    return msg
+
+
+class CogSogRapid(NamedTuple):
+    sid: int
+    heading_reference: N2kHeadingReference
+    cog: float
+    sog: float
+
+
+def parse_n2k_cog_sog_rapid(msg: Message) -> CogSogRapid:
+    index = IntRef(0)
+
+    return CogSogRapid(
+        sid=msg.get_byte_uint(index),
+        heading_reference=N2kHeadingReference(msg.get_byte_uint(index)),
+        cog=msg.get_2_byte_udouble(0.0001, index),
+        sog=msg.get_2_byte_udouble(0.01, index),
+    )
 
 
 # GNSS Position Data (PGN 129029)
-# TODO
+# TODO !!!
 
 
 # Date,Time & Local offset (PGN 129033, see also PGN 126992)
-# TODO
+# TODO !!!
 
 
 # AIS position reports for Class A (PGN 129038)
@@ -427,7 +557,7 @@ def n2k_set_status_binary_on_status(bank_status: N2kBinaryStatus, item_status: N
 
 
 # Navigation info (PGN 129284)
-# TODO
+# TODO !!!
 
 
 # Route/WP information (PGN 129285)
@@ -435,11 +565,11 @@ def n2k_set_status_binary_on_status(bank_status: N2kBinaryStatus, item_status: N
 
 
 # GNSS DOP data (PGN 129539)
-# TODO
+# TODO !!!
 
 
 # GNSS Satellites in View (PGN 129540)
-# TODO
+# TODO !!!
 
 
 # AIS static data class A (PGN 129794)
