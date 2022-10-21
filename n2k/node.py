@@ -1,4 +1,5 @@
 import struct
+import time
 from collections import deque
 from binascii import hexlify
 
@@ -316,6 +317,9 @@ class Node(can.Listener):
     def _send_frame(self, frame_id: int, length: int, buf: bytearray) -> bool:
         if not self._send_frames():
             return False
+
+        # Add Delay before sending frame, some devices (e.g. Garmin GMI20) can't process the frames otherwise
+        time.sleep(0.01)
         
         can_msg = can.message.Message(arbitration_id=frame_id, data=buf, dlc=length)
         try:
