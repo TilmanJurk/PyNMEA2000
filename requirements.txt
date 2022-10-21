@@ -1,0 +1,6 @@
+python-can
+uptime
+
+sphinx
+sphinx-autodoc-typehints
+sphinx-rtd-theme
