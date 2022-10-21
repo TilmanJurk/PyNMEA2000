@@ -215,7 +215,7 @@ class Node(can.Listener):
         :param model_version: The Model Version / Revision, e.g. '1.0'
         :param model_serial_code: The Model Serial Number
         :param load_equivalency: The Load Equivalency Number specifies the power draw of the device.
-               To get it simply take the estimated current draw in mA and divide it by 50 (and round up)
+               To get it simply take the estimated current draw in mA @12V and divide it by 50 (and round up)
         :param certification_level:
         :param product_code: The Product Code granted by the NMEA. Using 666 by default for Open Source projects.
         """
