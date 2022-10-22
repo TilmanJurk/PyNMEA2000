@@ -711,10 +711,9 @@ def set_n2k_wind_speed(sid: int, wind_speed: float, wind_angle: float, wind_refe
 
 class WindSpeed(NamedTuple):
     sid: int
-    heading: float
-    deviation: float
-    variation: float
-    ref: N2kHeadingReference
+    wind_speed: float
+    wind_angle: float
+    wind_reference: N2kWindReference
 
 
 def parse_n2k_wind_speed(msg: Message) -> WindSpeed:
@@ -724,7 +723,13 @@ def parse_n2k_wind_speed(msg: Message) -> WindSpeed:
     :param msg: NMEA2000 Message with PGN 127250
     :return: Dictionary containing the parsed information
     """
-    print("NotImplemented, parse_n2k_heading")
+    index = IntRef(0)
+    return WindSpeed(
+        sid=msg.get_byte_uint(index),
+        wind_speed=msg.get_2_byte_udouble(0.01, index),
+        wind_angle=msg.get_2_byte_udouble(0.0001, index),
+        wind_reference=N2kWindReference(msg.get_byte_uint(index))
+    )
 
 
 # Outside Environmental parameters (PGN 130310)
