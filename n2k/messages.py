@@ -728,7 +728,7 @@ def parse_n2k_wind_speed(msg: Message) -> WindSpeed:
         sid=msg.get_byte_uint(index),
         wind_speed=msg.get_2_byte_udouble(0.01, index),
         wind_angle=msg.get_2_byte_udouble(0.0001, index),
-        wind_reference=N2kWindReference(msg.get_byte_uint(index))
+        wind_reference=N2kWindReference(msg.get_byte_uint(index) & 0x07)
     )
 
 

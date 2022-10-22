@@ -19,6 +19,23 @@ n2k_node.set_configuration_information()
 
 # n2k.set_log_level(logging.DEBUG)
 
+class Handler(n2k.MessageHandler):
+    def __init__(self, node: n2k_node):
+        super().__init__(0, node)
+
+    def handle_msg(self, msg: n2k.Message) -> None:
+        if not (msg.pgn == n2k.PGN.WindSpeed or msg.pgn == n2k.PGN.VesselHeading):
+            return
+        if msg.pgn == n2k.PGN.WindSpeed:
+            print(msg)
+            wind_data = n2k.messages.parse_n2k_wind_speed(msg)
+            print(wind_data)
+        else:
+            print(n2k.messages.parse_n2k_heading(msg))
+
+handler = Handler(n2k_node)
+n2k_node.attach_msg_handler(handler)
+
 # notifier.add_listener(print)
 notifier.add_listener(n2k_node)
 
