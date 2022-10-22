@@ -527,7 +527,7 @@ def parse_n2k_cog_sog_rapid(msg: Message) -> CogSogRapid:
 
     return CogSogRapid(
         sid=msg.get_byte_uint(index),
-        heading_reference=N2kHeadingReference(msg.get_byte_uint(index)),
+        heading_reference=N2kHeadingReference(msg.get_byte_uint(index) & 0x03),
         cog=msg.get_2_byte_udouble(0.0001, index),
         sog=msg.get_2_byte_udouble(0.01, index),
     )
