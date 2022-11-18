@@ -73,7 +73,14 @@ def set_n2k_ais_related_broadcast_msg(message_id: int, repeat: N2kAISRepeat, sou
     :param safety_related_text: Maximum 121 bytes. Encoded as 6-bit ASCII
     :return: NMEA2000 message ready to be sent.
     """
-    print("NotImplemented, set_n2k_ais_related_broadcast_msg")
+    msg = Message()
+    msg.pgn = PGN.AISSafetyRelatedBroadcastMessage
+    msg.priority = 5
+    msg.add_byte_uint((repeat & 0x03) << 6 | (message_id & 0x3f))
+    msg.add_4_byte_uint(0xc0000000 | (source_id & 0x3fffffff))
+    msg.add_byte_uint(0xe0 | (0x1f & ais_transceiver_information))
+    msg.add_var_str(safety_related_text)
+    return msg
 
 
 class AISSafetyRelatedBroadcast(NamedTuple):
@@ -91,7 +98,16 @@ def parse_n2k_ais_related_broadcast_msg(msg: Message) -> AISSafetyRelatedBroadca
     :param msg: NMEA2000 Message with PGN 126992
     :return: Dictionary containing the parsed information.
     """
-    print("NotImplemented, parse_n2k_ais_related_broadcast_msg")
+    index = IntRef(0)
+    vb = msg.get_byte_uint(index)
+
+    return AISSafetyRelatedBroadcast(
+        message_id=vb & 0x3f,
+        repeat=N2kAISRepeat((vb >> 6) & 0x03),
+        source_id=msg.get_4_byte_uint(index) & 0x3fffffff,
+        ais_transceiver_information=N2kAISTransceiverInformation(msg.get_byte_uint(index) & 0x1f),
+        safety_related_text=msg.get_var_str(index),
+    )
 
 
 # Man Overboard Notification (PGN 127233)
