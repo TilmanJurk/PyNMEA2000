@@ -32,6 +32,7 @@ def set_n2k_system_time(sid: int, system_date: int, system_time: float,
     msg.add_byte_uint((time_source & 0x0f) | 0xf0)
     msg.add_2_byte_uint(system_date)
     msg.add_4_byte_double(system_time, 1e-4)
+    return msg
 
 
 class SystemTime(NamedTuple):
