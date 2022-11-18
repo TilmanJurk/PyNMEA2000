@@ -136,7 +136,24 @@ def set_n2k_mob_notification(sid: int, mob_emitter_id: int, mob_status: N2kMOBSt
     :param mob_emitter_battery_status: see :py:class:`n2k_types.N2kMOBEmitterBatteryStatus`
     :return: NMEA2000 message ready to be sent.
     """
-    print("NotImplemented, set_n2k_mob_notification")
+    msg = Message()
+    msg.pgn = PGN.ManOverBoard
+    msg.priority = 3
+    msg.add_byte_uint(sid)
+    msg.add_4_byte_uint(mob_emitter_id)
+    msg.add_byte_uint((mob_status & 0x07) | 0xf8)
+    msg.add_4_byte_udouble(activation_time, 0.0001)
+    msg.add_byte_uint((position_source & 0x07) | 0xf8)
+    msg.add_2_byte_uint(position_date)
+    msg.add_4_byte_udouble(position_time, 0.0001)
+    msg.add_4_byte_double(latitude, 1e-7)
+    msg.add_4_byte_double(longitude, 1e-7)
+    msg.add_byte_uint((cog_reference & 0x03) | 0xfc)
+    msg.add_2_byte_udouble(cog, 0.0001)
+    msg.add_2_byte_udouble(sog, 0.01)
+    msg.add_4_byte_uint(mmsi)
+    msg.add_byte_uint((mob_emitter_battery_status & 0x07) | 0xf8)
+    return msg
 
 
 class MOBNotification(NamedTuple):
@@ -163,7 +180,24 @@ def parse_n2k_mob_notification(msg: Message) -> MOBNotification:
     :param msg: NMEA2000 Message with PGN 127233
     :return: Dictionary containing the parsed information.
     """
-    print("NotImplemented, parse_n2k_mob_notification")
+    index = IntRef(0)
+
+    return MOBNotification(
+        sid=msg.get_byte_uint(index),
+        mob_emitter_id=msg.get_4_byte_uint(index),
+        mob_status=N2kMOBStatus(msg.get_byte_uint(index) & 0x07),
+        activation_time=msg.get_4_byte_udouble(0.0001, index),
+        position_source=N2kMOBPositionSource(msg.get_byte_uint(index) & 0x07),
+        position_date=msg.get_2_byte_uint(index),
+        position_time=msg.get_4_byte_udouble(0.0001, index),
+        latitude=msg.get_4_byte_double(1e-7, index),
+        longitude=msg.get_4_byte_double(1e-7, index),
+        cog_reference=N2kHeadingReference(msg.get_byte_uint(index) & 0x03),
+        cog=msg.get_2_byte_udouble(0.0001, index),
+        sog=msg.get_2_byte_udouble(0.01, index),
+        mmsi=msg.get_4_byte_uint(index),
+        mob_emitter_battery_status=N2kMOBEmitterBatteryStatus(msg.get_byte_uint(index) & 0x07),
+    )
 
 
 # Heading/Track Control (PGN 127237)
