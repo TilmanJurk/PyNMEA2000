@@ -232,7 +232,31 @@ def set_n2k_heading_track_control(rudder_limit_exceeded: N2kOnOff, off_heading_l
     :param vessel_heading: In radians
     :return: NMEA2000 message ready to be sent.
     """
-    print("NotImplemented, set_n2k_heading_track_control")
+    msg = Message()
+    msg.pgn = PGN.HeadingTrackControl
+    msg.priority = 2
+    msg.add_byte_uint(
+        (rudder_limit_exceeded & 0x03) << 0 |
+        (off_heading_limit_exceeded & 0x03) << 2 |
+        (off_track_limit_exceeded & 0x03) << 4 |
+        (override & 0x03) << 6
+    )
+    msg.add_byte_uint(
+        (steering_mode & 0x07) << 0|
+        (turn_mode & 0x07) << 3 |
+        (heading_reference & 0x03) << 6
+    )
+    msg.add_byte_uint((commanded_rudder_direction & 0x07) << 5 | 0x1f)
+    msg.add_2_byte_double(commanded_rudder_angle, 0.0001)
+    msg.add_2_byte_udouble(heading_to_steer_course, 0.0001)
+    msg.add_2_byte_udouble(track, 0.0001)
+    msg.add_2_byte_udouble(rudder_limit, 0.0001)
+    msg.add_2_byte_udouble(off_heading_limit, 0.0001)
+    msg.add_2_byte_double(radius_of_turn_order, 1)
+    msg.add_2_byte_double(rate_of_turn_order, 3.125e-5)
+    msg.add_2_byte_double(off_track_limit, 1)
+    msg.add_2_byte_udouble(vessel_heading, 0.0001)
+    return msg
 
 
 class HeadingTrackControl(NamedTuple):
@@ -262,7 +286,35 @@ def parse_n2k_heading_track_control(msg: Message) -> HeadingTrackControl:
     :param msg: NMEA2000 Message with PGN 127237
     :return: Dictionary containing the parsed information.
     """
-    print("NotImplemented, parse_n2k_heading_track_control")
+    index = IntRef(0)
+    vb = msg.get_byte_uint(index)
+    rudder_limit_exceeded = N2kOnOff(vb & 0x03)
+    off_heading_limit_exceeded = N2kOnOff((vb >> 2) & 0x03)
+    off_track_limit_exceeded = N2kOnOff((vb >> 4) & 0x03)
+    override = N2kOnOff((vb >> 6) & 0x03)
+    vb = msg.get_byte_uint(index)
+    steering_mode = N2kSteeringMode(vb & 0x07)
+    turn_mode = N2kTurnMode((vb >> 3) & 0x07)
+    heading_reference = N2kHeadingReference((vb >> 6) & 0x03)
+    return HeadingTrackControl(
+        rudder_limit_exceeded=rudder_limit_exceeded,
+        off_heading_limit_exceeded=off_heading_limit_exceeded,
+        off_track_limit_exceeded=off_track_limit_exceeded,
+        override=override,
+        steering_mode=steering_mode,
+        turn_mode=turn_mode,
+        heading_reference=heading_reference,
+        commanded_rudder_direction=N2kRudderDirectionOrder((msg.get_byte_uint(index) >> 5) & 0x07),
+        commanded_rudder_angle=msg.get_2_byte_double(0.0001, index),
+        heading_to_steer_course=msg.get_2_byte_udouble(0.0001, index),
+        track=msg.get_2_byte_udouble(0.0001, index),
+        rudder_limit=msg.get_2_byte_udouble(0.0001, index),
+        off_heading_limit=msg.get_2_byte_udouble(0.0001, index),
+        radius_of_turn_order=msg.get_2_byte_double(1, index),
+        rate_of_turn_order=msg.get_2_byte_double(3.125e-5, index),
+        off_track_limit=msg.get_2_byte_double(1, index),
+        vessel_heading=msg.get_2_byte_udouble(0.0001, index),
+    )
 
 
 # Rudder (PGN 127245)
