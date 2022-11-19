@@ -874,7 +874,59 @@ def parse_n2k_fluid_level(msg: Message) -> FluidLevel:
 
 
 # DC Detailed Status (PGN 127506)
-# TODO
+def set_n2k_dc_detailed_status(sid: int, dc_instance: int, dc_type: N2kDCType, state_of_charge: int, state_of_health: int,
+                               time_remaining: float, ripple_voltage: float, capacity: float) -> Message:
+    """
+    DC Detailed Status (PGN 127506)
+
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        different messages to indicate that they are measured at same time
+    :param dc_instance: DC Source Instance
+    :param dc_type: Type of DC Source
+    :param state_of_charge: Percent of charge
+    :param state_of_health: Percent of health
+    :param time_remaining: Time remaining in seconds
+    :param ripple_voltage: DC output voltage ripple in Volt
+    :param capacity: Battery capacity in coulombs
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.DCDetailedstatus
+    msg.priority = 6
+    msg.add_byte_uint(sid)
+    msg.add_byte_uint(dc_instance)
+    msg.add_byte_uint(dc_type)
+    msg.add_byte_uint(state_of_charge)
+    msg.add_byte_uint(state_of_health)
+    msg.add_2_byte_udouble(time_remaining, 60)
+    msg.add_2_byte_udouble(ripple_voltage, 0.001)
+    msg.add_2_byte_udouble(capacity, 3600)
+    return msg
+
+
+class DCDetailedStatus(NamedTuple):
+    sid: int
+    dc_instance: int
+    dc_type: N2kDCType
+    state_of_charge: int
+    state_of_health: int
+    time_remaining: float
+    ripple_voltage: float
+    capacity: float
+
+
+def parse_n2k_dc_detailed_status(msg: Message) -> DCDetailedStatus:
+    index = IntRef(0)
+    return DCDetailedStatus(
+        sid=msg.get_byte_uint(index),
+        dc_instance=msg.get_byte_uint(index),
+        dc_type=N2kDCType(msg.get_byte_uint(index)),
+        state_of_charge=msg.get_byte_uint(index),
+        state_of_health=msg.get_byte_uint(index),
+        time_remaining=msg.get_2_byte_udouble(60, index),
+        ripple_voltage=msg.get_2_byte_udouble(0.001, index),
+        capacity=msg.get_2_byte_udouble(3600, index),
+    )
 
 
 # Charger Status (PGN 127507)
