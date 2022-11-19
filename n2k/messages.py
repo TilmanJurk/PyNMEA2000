@@ -330,7 +330,16 @@ def set_n2k_rudder(rudder_position: float, instance: int = 0,
     :param angle_order: Angle where rudder should be turned in radians.
     :return: NMEA2000 Message ready to be sent.
     """
-    print("NotImplemented, set_n2k_rudder")
+    msg = Message()
+    msg.pgn = PGN.Rudder
+    msg.priority = 2
+    msg.add_byte_uint(instance)
+    msg.add_byte_uint((rudder_direction_order & 0x07) | 0xf8)
+    msg.add_2_byte_double(angle_order, 0.0001)
+    msg.add_2_byte_double(rudder_position, 0.0001)
+    msg.add_byte_uint(0xff) # reserved
+    msg.add_byte_uint(0xff) # reserved
+    return msg
 
 
 class Rudder(NamedTuple):
@@ -347,7 +356,13 @@ def parse_n2k_rudder(msg: Message) -> Rudder:
     :param msg: NMEA2000 Message with PGN 127245
     :return: Dictionary containing the parsed information
     """
-    print("NotImplemented, parse_n2k_rudder")
+    index = IntRef(0)
+    return Rudder(
+        instance=msg.get_byte_uint(index),
+        rudder_direction_order=N2kRudderDirectionOrder(msg.get_byte_uint(index) & 0x07),
+        angle_order=msg.get_2_byte_double(0.0001, index),
+        rudder_position=msg.get_2_byte_double(0.0001, index)
+    )
 
 
 # Vessel Heading (PGN 127250)
