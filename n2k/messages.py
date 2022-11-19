@@ -7,7 +7,8 @@ from n2k.message import Message
 from n2k.types import N2kTimeSource, N2kAISRepeat, N2kAISTransceiverInformation, N2kMOBStatus, N2kMOBPositionSource, \
     N2kHeadingReference, N2kMOBEmitterBatteryStatus, N2kOnOff, N2kSteeringMode, N2kTurnMode, N2kRudderDirectionOrder, \
     ProductInformation, ConfigurationInformation, N2kWindReference, N2kGNSSType, N2kGNSSMethod, N2kMagneticVariation, \
-    N2kEngineDiscreteStatus1, N2kEngineDiscreteStatus2, N2kTransmissionGear, N2kTransmissionDiscreteStatus1
+    N2kEngineDiscreteStatus1, N2kEngineDiscreteStatus2, N2kTransmissionGear, N2kTransmissionDiscreteStatus1, \
+    N2kFluidType, N2kDCType
 from n2k.constants import *
 from n2k.utils import IntRef
 
@@ -834,7 +835,42 @@ def parse_n2k_binary_status_report(msg: Message) -> BinaryStatusReport:
 
 
 # Fluid level (PGN 127505)
-# TODO
+def set_n2k_fluid_level(instance: int, fluid_type: N2kFluidType, level: float, capacity: float) -> Message:
+    """
+    Fluid Level (PGN 127505)
+
+    :param instance: Tank instance. Different devices handles this a bit differently.
+    :param fluid_type: Type of fluid.
+    :param level: Tank level in % of full tank, precision 0.004%
+    :param capacity: Tank capacity in litres, precision 0.1L
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.priority = 6
+    msg.add_byte_uint((instance & 0x0f) | ((fluid_type & 0x0f) << 4))
+    msg.add_2_byte_double(level, 0.004)
+    msg.add_4_byte_udouble(capacity, 0.1)
+    msg.add_byte_uint(0xff)  # Reserved
+    return msg
+
+
+class FluidLevel(NamedTuple):
+    instance: int
+    fluid_type: N2kFluidType
+    level: float
+    capacity: float
+
+
+def parse_n2k_fluid_level(msg: Message) -> FluidLevel:
+    index = IntRef(0)
+    vb = msg.get_byte_uint(index)
+
+    return FluidLevel(
+        instance=vb & 0x0f,
+        fluid_type=N2kFluidType((vb >> 4) & 0x0f),
+        level=msg.get_2_byte_double(0.004, index),
+        capacity=msg.get_4_byte_udouble(0.1, index),
+    )
 
 
 # DC Detailed Status (PGN 127506)
