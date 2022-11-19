@@ -6,7 +6,7 @@ from n2k.n2k import PGN
 from n2k.message import Message
 from n2k.types import N2kTimeSource, N2kAISRepeat, N2kAISTransceiverInformation, N2kMOBStatus, N2kMOBPositionSource, \
     N2kHeadingReference, N2kMOBEmitterBatteryStatus, N2kOnOff, N2kSteeringMode, N2kTurnMode, N2kRudderDirectionOrder, \
-    ProductInformation, ConfigurationInformation, N2kWindReference, N2kGNSSType, N2kGNSSMethod
+    ProductInformation, ConfigurationInformation, N2kWindReference, N2kGNSSType, N2kGNSSMethod, N2kMagneticVariation
 from n2k.constants import *
 from n2k.utils import IntRef
 
@@ -493,7 +493,44 @@ def parse_n2k_attitude(msg: Message) -> Attitude:
 
 
 # Magnetic Variation (PGN 127258)
-# TODO
+def set_n2k_magnetic_variation(sid: int, source: N2kMagneticVariation, days_since_1970: int, variation: float) -> Message:
+    """
+    Magnetic Variation (PGN 127258)
+
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        for different messages to indicate that they are measured at same time.
+    :param source: How the magnetic variation for the current location has been derived
+    :param days_since_1970: UTC Date in Days since 1970
+    :param variation: Variation in radians, positive values represent Easterly, negative values a Westerly variation.
+    :return: NMEA2000 message ready to be sent
+    """
+
+    msg = Message()
+    msg.pgn = PGN.MagneticVariation
+    msg.priority = 6
+    msg.add_byte_uint(sid)
+    msg.add_byte_uint(source & 0x0f)
+    msg.add_2_byte_uint(days_since_1970)
+    msg.add_2_byte_double(variation, 0.0001)
+    msg.add_2_byte_uint(0xffff)
+    return msg
+
+
+class MagneticVariation(NamedTuple):
+    sid: int
+    source: N2kMagneticVariation
+    days_since_1970: int
+    variation: float
+
+
+def parse_n2k_magnetic_variation(msg: Message) -> MagneticVariation:
+    index = IntRef(0)
+    return MagneticVariation(
+        sid=msg.get_byte_uint(index),
+        source=N2kMagneticVariation(msg.get_byte_uint(index) & 0x0f),
+        days_since_1970=msg.get_2_byte_uint(index),
+        variation=msg.get_2_byte_double(0.0001, index),
+    )
 
 
 # Engine parameters rapid (PGN 127488)
