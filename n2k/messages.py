@@ -777,12 +777,11 @@ def n2k_get_status_on_binary_status(bank_status: N2kBinaryStatus, item_index: in
     :param item_index: Status item index 1-28
     :return: single status of full binary bank status
     """
-    print("NotImplemented, n2k_get_status_on_binary_status")
+    item_index -= 1
+    if item_index > 27:
+        return N2kOnOff.Unavailable
 
-
-def n2k_reset_binary_status(bank_status: N2kBinaryStatus) -> None:
-    # TODO: can't pass int as reference in python so this doesn't make any sense
-    print("NotImplemented, n2k_reset_binary_status")
+    return N2kOnOff((bank_status >> (2* item_index)) & 0x03)
 
 
 def n2k_set_status_binary_on_status(bank_status: N2kBinaryStatus, item_status: N2kOnOff, item_index: int = 1) -> N2kBinaryStatus:
@@ -794,7 +793,14 @@ def n2k_set_status_binary_on_status(bank_status: N2kBinaryStatus, item_status: N
     :param item_index: Index of Item to be changed
     :return: New Bank Status
     """
-    print("NotImplemented, n2k_set_status_binary_on_status")
+    item_index -= 1
+    if item_index > 27:
+        # TODO: log warning
+        return bank_status
+
+    mask = ~(0b11 << (2 * item_index))
+
+    return (bank_status & mask) | item_status << (2 * item_index)
 
 
 # Binary status report (PGN 127501)
