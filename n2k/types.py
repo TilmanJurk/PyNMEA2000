@@ -370,6 +370,33 @@ class N2kPGNList(IntEnum):
     receive = 1
 
 
+class N2kTransmissionDiscreteStatus1:
+    check_temperature: int = 0
+    over_temperature: int = 0
+    low_oil_pressure: int = 0
+    low_oil_level: int = 0
+    sail_drive: int = 0
+
+    def __init__(self, status):
+        self.status = status
+
+    @property
+    def status (self) -> int:
+        return self.check_temperature << 0 | \
+               self.over_temperature << 1 | \
+               self.low_oil_pressure << 2 | \
+               self.low_oil_level << 3 | \
+               self.sail_drive << 4
+
+    @status.setter
+    def status(self, value):
+        self.check_temperature = value >> 0 & 0b1
+        self.over_temperature = value >> 1 & 0b1
+        self.low_oil_pressure = value >> 2 & 0b1
+        self.low_oil_level = value >> 3 & 0b1
+        self.sail_drive = value >> 4 & 0b1
+
+
 # Aliases for N2K standard types
 N2kEngineDiscreteStatus1 = n2k.nmea2000_std_types.N2kDD206
 N2kEngineDiscreteStatus2 = n2k.nmea2000_std_types.N2kDD223

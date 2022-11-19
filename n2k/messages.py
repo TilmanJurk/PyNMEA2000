@@ -7,7 +7,7 @@ from n2k.message import Message
 from n2k.types import N2kTimeSource, N2kAISRepeat, N2kAISTransceiverInformation, N2kMOBStatus, N2kMOBPositionSource, \
     N2kHeadingReference, N2kMOBEmitterBatteryStatus, N2kOnOff, N2kSteeringMode, N2kTurnMode, N2kRudderDirectionOrder, \
     ProductInformation, ConfigurationInformation, N2kWindReference, N2kGNSSType, N2kGNSSMethod, N2kMagneticVariation, \
-    N2kEngineDiscreteStatus1, N2kEngineDiscreteStatus2
+    N2kEngineDiscreteStatus1, N2kEngineDiscreteStatus2, N2kTransmissionGear, N2kTransmissionDiscreteStatus1
 from n2k.constants import *
 from n2k.utils import IntRef
 
@@ -669,7 +669,53 @@ def parse_n2k_engine_parameters_dynamic(msg: Message) -> EngineParametersDynamic
 
 
 # Transmission parameters, dynamic (PGN 127493)
-# TODO
+def set_n2k_transmission_parameters_dynamic(engine_instance: int, transmission_gear: N2kTransmissionGear,
+                                            oil_pressure: float, oil_temperature: float,
+                                            discrete_status1: N2kTransmissionDiscreteStatus1) -> Message:
+    """
+    Transmission Parameters, Dynamic (PGN 127493)
+
+    :param engine_instance: This field indicates the particular engine for which this
+        data applies. A single engine will have an instance of 0. Engines in multi-engine
+        boats will be numbered starting at 0 at the bow of the boat incrementing to n going
+        in towards the stern of the boat. For engines at the same distance from the bow are
+        stern, the engines are numbered starting from the port side and proceeding towards
+        the starboard side.
+    :param transmission_gear: The current gear the transmission is in
+    :param oil_pressure: Transmission oil pressure in Pascal, precision 100 Pa
+    :param oil_temperature: Transmission oil temperature in degrees Kelvin, precision 0.1°K
+    :param discrete_status1: Transmission warning conditions.
+    :return:
+    """
+    msg = Message()
+    msg.pgn = PGN.TransmissionParameters
+    msg.priority = 2
+    msg.add_byte_uint(engine_instance)
+    msg.add_byte_uint((transmission_gear & 0x03) | 0xfc)
+    msg.add_2_byte_udouble(oil_pressure, 100)
+    msg.add_2_byte_udouble(oil_temperature, 0.1)
+    msg.add_byte_uint(discrete_status1.status)
+    msg.add_byte_uint(0xff)  # Reserved
+    return msg
+
+
+class TransmissionParametersDynamic(NamedTuple):
+    engine_instance: int
+    transmission_gear: N2kTransmissionGear
+    oil_pressure: float
+    oil_temperature: float
+    discrete_status1: N2kTransmissionDiscreteStatus1
+
+
+def parse_n2k_transmission_parameters_dynamic(msg: Message) -> TransmissionParametersDynamic:
+    index = IntRef(0)
+    return TransmissionParametersDynamic(
+        engine_instance=msg.get_byte_uint(index),
+        transmission_gear=N2kTransmissionGear(msg.get_byte_uint(index) & 0x03),
+        oil_pressure=msg.get_2_byte_udouble(100, index),
+        oil_temperature=msg.get_2_byte_udouble(0.1, index),
+        discrete_status1=N2kTransmissionDiscreteStatus1(msg.get_byte_uint(index) & 0x1f)
+    )
 
 
 # Trip Parameters, Engine (PGN 127497)
