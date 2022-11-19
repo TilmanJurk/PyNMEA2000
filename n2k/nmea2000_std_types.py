@@ -63,6 +63,9 @@ class N2kDD206:
     throttle_position_sensor: int = 0
     engine_emergency_stop_mode: int = 0
 
+    def __init__(self, status):
+        self.status = status
+
     @property
     def status(self):
         return self.check_engine << 0 | \
@@ -119,6 +122,9 @@ class N2kDD223:
     manufacturer6: int = 0
     manufacturer7: int = 0
     manufacturer8: int = 0
+
+    def __init__(self, status):
+        self.status = status
 
     @property
     def status(self):

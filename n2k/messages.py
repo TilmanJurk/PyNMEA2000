@@ -6,7 +6,8 @@ from n2k.n2k import PGN
 from n2k.message import Message
 from n2k.types import N2kTimeSource, N2kAISRepeat, N2kAISTransceiverInformation, N2kMOBStatus, N2kMOBPositionSource, \
     N2kHeadingReference, N2kMOBEmitterBatteryStatus, N2kOnOff, N2kSteeringMode, N2kTurnMode, N2kRudderDirectionOrder, \
-    ProductInformation, ConfigurationInformation, N2kWindReference, N2kGNSSType, N2kGNSSMethod, N2kMagneticVariation
+    ProductInformation, ConfigurationInformation, N2kWindReference, N2kGNSSType, N2kGNSSMethod, N2kMagneticVariation, \
+    N2kEngineDiscreteStatus1, N2kEngineDiscreteStatus2
 from n2k.constants import *
 from n2k.utils import IntRef
 
@@ -579,8 +580,92 @@ def parse_n2k_engine_parameters_rapid(msg: Message) -> EngineParametersRapid:
     )
 
 
-# Engine parameters dynamic (PGN 127489)
-# TODO
+# Engine Parameters Dynamic (PGN 127489)
+def set_n2k_engine_parameters_dynamic(engine_instance: int, engine_oil_press: float, engine_oil_temp: float,
+                                      engine_coolant_temp: float, alternator_voltage: float, fuel_rate: float,
+                                      engine_hours: float, engine_coolant_press: float, engine_fuel_press: float,
+                                      engine_load: int, engine_torque: int, status1: N2kEngineDiscreteStatus1,
+                                      status2: N2kEngineDiscreteStatus2) -> Message:
+    """
+    Engine Parameters Dynamic (PGN 127489)
+
+    :param engine_instance: This field indicates the particular engine for which this
+        data applies. A single engine will have an instance of 0. Engines in multi-engine
+        boats will be numbered starting at 0 at the bow of the boat incrementing to n going
+        in towards the stern of the boat. For engines at the same distance from the bow are
+        stern, the engines are numbered starting from the port side and proceeding towards
+        the starboard side.
+    :param engine_oil_press: Oil pressure of the engine in Pascal, precision 100Pa
+    :param engine_oil_temp: Oil temperature of the engine in degrees Kelvin, precision 0.1°K
+    :param engine_coolant_temp: Engine coolant temperature in degrees Kelvin, precision 0.1°K
+    :param alternator_voltage: Alternator voltage in Volt, precision 0.01V
+    :param fuel_rate: Fuel consumption rate in cubic meters per hour, precision 0.0001 m³/h
+    :param engine_hours: Cumulative runtime of the engine in seconds
+    :param engine_coolant_press: Engine coolant pressure in Pascal, precision 100 Pa
+    :param engine_fuel_press: Fuel pressure in Pascal, precision 1000 Pa
+    :param engine_load: Percent engine load, precision 1%
+    :param engine_torque: Percent engine torque, precision 1%
+    :param status1: Warning conditions part 1
+    :param status2: Warning conditions part 2
+    :return:
+    """
+    msg = Message()
+    msg.pgn = PGN.EngineParametersDynamic
+    msg.priority = 2
+    msg.add_byte_uint(engine_instance)
+    msg.add_2_byte_udouble(engine_oil_press, 100)
+    msg.add_2_byte_udouble(engine_oil_temp, 0.1)
+    msg.add_2_byte_udouble(engine_coolant_temp, 0.01)
+    msg.add_2_byte_double(alternator_voltage, 0.01)
+    msg.add_2_byte_double(fuel_rate, 0.1)
+    msg.add_4_byte_udouble(engine_hours, 1)
+    msg.add_2_byte_udouble(engine_coolant_press, 100)
+    msg.add_2_byte_udouble(engine_fuel_press, 1000)
+    msg.add_byte_uint(0xff)  # reserved
+    msg.add_2_byte_uint(status1.status)
+    msg.add_2_byte_uint(status2.status)
+    msg.add_byte_uint(engine_load)
+    msg.add_byte_uint(engine_torque)
+    return msg
+
+
+class EngineParametersDynamic(NamedTuple):
+    engine_instance: int
+    engine_oil_press: float
+    engine_oil_temp: float
+    engine_coolant_temp: float
+    alternator_voltage: float
+    fuel_rate: float
+    engine_hours: float
+    engine_coolant_press: float
+    engine_fuel_press: float
+    engine_load: int
+    engine_torque: int
+    status1: N2kEngineDiscreteStatus1
+    status2: N2kEngineDiscreteStatus2
+
+
+def parse_n2k_engine_parameters_dynamic(msg: Message) -> EngineParametersDynamic:
+    index = IntRef(0)
+
+    epd = EngineParametersDynamic(
+        engine_instance=msg.get_byte_uint(index),
+        engine_oil_press=msg.get_2_byte_udouble(100, index),
+        engine_oil_temp=msg.get_2_byte_udouble(0.1, index),
+        engine_coolant_temp=msg.get_2_byte_udouble(0.01, index),
+        alternator_voltage=msg.get_2_byte_double(0.01, index),
+        fuel_rate=msg.get_2_byte_double(0.1, index),
+        engine_hours=msg.get_4_byte_udouble(1, index),
+        engine_coolant_press=msg.get_2_byte_udouble(100, index),
+        engine_fuel_press=msg.get_2_byte_udouble(1000, index),
+    )
+    msg.get_byte_uint(index)
+    epd.status1 = N2kEngineDiscreteStatus1(msg.get_2_byte_uint(index))
+    epd.status2 = N2kEngineDiscreteStatus2(msg.get_2_byte_uint(index))
+    epd.engine_load = msg.get_byte_uint(index)
+    epd.engine_torque = msg.get_byte_uint(index)
+
+    return epd
 
 
 # Transmission parameters, dynamic (PGN 127493)
