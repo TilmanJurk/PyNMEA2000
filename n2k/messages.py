@@ -8,7 +8,7 @@ from n2k.types import N2kTimeSource, N2kAISRepeat, N2kAISTransceiverInformation,
     N2kHeadingReference, N2kMOBEmitterBatteryStatus, N2kOnOff, N2kSteeringMode, N2kTurnMode, N2kRudderDirectionOrder, \
     ProductInformation, ConfigurationInformation, N2kWindReference, N2kGNSSType, N2kGNSSMethod, N2kMagneticVariation, \
     N2kEngineDiscreteStatus1, N2kEngineDiscreteStatus2, N2kTransmissionGear, N2kTransmissionDiscreteStatus1, \
-    N2kFluidType, N2kDCType
+    N2kFluidType, N2kDCType, N2kChargeState, N2kChargerMode
 from n2k.constants import *
 from n2k.utils import IntRef
 
@@ -930,7 +930,64 @@ def parse_n2k_dc_detailed_status(msg: Message) -> DCDetailedStatus:
 
 
 # Charger Status (PGN 127507)
-# TODO
+def set_n2k_charger_status(instance: int, battery_instance: int, charge_state: N2kChargeState,
+                           charger_mode: N2kChargerMode, enabled: N2kOnOff, equalization_pending: N2kOnOff,
+                           equalization_time_remaining: float) -> Message:
+    """
+    Charger Status (PGN 127507)
+
+    :param instance: Charger Instance
+    :param battery_instance: Battery Instance
+    :param charge_state: Operating State
+    :param charger_mode: Charger Mode
+    :param enabled: Yes/No
+    :param equalization_pending: Yes/No
+    :param equalization_time_remaining: in seconds, precision 1s
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.ChargerStatus
+    msg.priority = 6
+    msg.add_byte_uint(instance)
+    msg.add_byte_uint(battery_instance)
+    msg.add_byte_uint((charger_mode & 0x0f) << 4 | (charge_state & 0x0f))
+    msg.add_byte_uint(0x0f << 4 | (equalization_pending & 0x03) << 2 | (enabled & 0x03))
+    msg.add_2_byte_udouble(equalization_time_remaining, 1)
+    return msg
+
+
+class ChargerStatus(NamedTuple):
+    instance: int
+    battery_instance: int
+    charge_state: N2kChargeState
+    charger_mode: N2kChargerMode
+    enabled: N2kOnOff
+    equalization_pending: N2kOnOff
+    equalization_time_remaining: float
+
+
+def parse_n2k_charger_status(msg: Message) -> ChargerStatus:
+    index = IntRef(0)
+
+    instance = msg.get_byte_uint(index)
+    battery_instance = msg.get_byte_uint(index)
+    vb = msg.get_byte_uint(index)
+    charge_state = N2kChargeState(vb & 0x0f)
+    charger_mode = N2kChargerMode((vb >> 4) & 0x0f)
+    vb = msg.get_byte_uint(index)
+    enabled = N2kOnOff(vb & 0x03)
+    equalization_pending = N2kOnOff((vb >> 2) & 0x03)
+    equalization_time_remaining = msg.get_2_byte_double(60, index)
+
+    return ChargerStatus(
+        instance=instance,
+        battery_instance=battery_instance,
+        charge_state=charge_state,
+        charger_mode=charger_mode,
+        enabled=enabled,
+        equalization_pending=equalization_pending,
+        equalization_time_remaining=equalization_time_remaining,
+    )
 
 
 # Battery Status (PGN 127508)
