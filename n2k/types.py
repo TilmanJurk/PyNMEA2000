@@ -390,11 +390,11 @@ class N2kTransmissionDiscreteStatus1:
 
     @status.setter
     def status(self, value):
-        self.check_temperature = value >> 0 & 0b1
-        self.over_temperature = value >> 1 & 0b1
-        self.low_oil_pressure = value >> 2 & 0b1
-        self.low_oil_level = value >> 3 & 0b1
-        self.sail_drive = value >> 4 & 0b1
+        self.check_temperature = (value >> 0) & 0b1
+        self.over_temperature = (value >> 1) & 0b1
+        self.low_oil_pressure = (value >> 2) & 0b1
+        self.low_oil_level = (value >> 3) & 0b1
+        self.sail_drive = (value >> 4) & 0b1
 
 
 # Aliases for N2K standard types

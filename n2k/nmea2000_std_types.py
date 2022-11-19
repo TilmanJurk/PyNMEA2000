@@ -87,22 +87,22 @@ class N2kDD206:
 
     @status.setter
     def status(self, value):
-        self.check_engine = value >> 0 & 0b1
-        self.over_temperature = value >> 1 & 0b1
-        self.low_oil_pressure = value >> 2 & 0b1
-        self.low_oil_level = value >> 3 & 0b1
-        self.low_fuel_pressure = value >> 4 & 0b1
-        self.low_system_voltage = value >> 5 & 0b1
-        self.low_coolant_level = value >> 6 & 0b1
-        self.water_flow = value >> 7 & 0b1
-        self.water_in_fuel = value >> 8 & 0b1
-        self.charge_indicator = value >> 9 & 0b1
-        self.preheat_indicator = value >> 10 & 0b1
-        self.high_boost_pressure = value >> 11 & 0b1
-        self.rev_limit_exceeded = value >> 12 & 0b1
-        self.egr_system = value >> 13 & 0b1
-        self.throttle_position_sensor = value >> 14 & 0b1
-        self.engine_emergency_stop_mode = value >> 15 & 0b1
+        self.check_engine = (value >> 0) & 0b1
+        self.over_temperature = (value >> 1) & 0b1
+        self.low_oil_pressure = (value >> 2) & 0b1
+        self.low_oil_level = (value >> 3) & 0b1
+        self.low_fuel_pressure = (value >> 4) & 0b1
+        self.low_system_voltage = (value >> 5) & 0b1
+        self.low_coolant_level = (value >> 6) & 0b1
+        self.water_flow = (value >> 7) & 0b1
+        self.water_in_fuel = (value >> 8) & 0b1
+        self.charge_indicator = (value >> 9) & 0b1
+        self.preheat_indicator = (value >> 10) & 0b1
+        self.high_boost_pressure = (value >> 11) & 0b1
+        self.rev_limit_exceeded = (value >> 12) & 0b1
+        self.egr_system = (value >> 13) & 0b1
+        self.throttle_position_sensor = (value >> 14) & 0b1
+        self.engine_emergency_stop_mode = (value >> 15) & 0b1
 
 
 class N2kDD223:
@@ -147,22 +147,22 @@ class N2kDD223:
 
     @status.setter
     def status(self, value):
-        self.warning_level1 = value >> 0 & 0b1
-        self.warning_level2 = value >> 1 & 0b1
-        self.power_reduction = value >> 2 & 0b1
-        self.maintenance_needed = value >> 3 & 0b1
-        self.engine_comm_error = value >> 4 & 0b1
-        self.sub_or_secondary_throttle = value >> 5 & 0b1
-        self.neutral_start_protect = value >> 6 & 0b1
-        self.engine_shutting_down = value >> 7 & 0b1
-        self.manufacturer1 = value >> 8 & 0b1
-        self.manufacturer2 = value >> 9 & 0b1
-        self.manufacturer3 = value >> 10 & 0b1
-        self.manufacturer4 = value >> 11 & 0b1
-        self.manufacturer5 = value >> 12 & 0b1
-        self.manufacturer6 = value >> 13 & 0b1
-        self.manufacturer7 = value >> 14 & 0b1
-        self.manufacturer8 = value >> 15 & 0b1
+        self.warning_level1 = (value >> 0) & 0b1
+        self.warning_level2 = (value >> 1) & 0b1
+        self.power_reduction = (value >> 2) & 0b1
+        self.maintenance_needed = (value >> 3) & 0b1
+        self.engine_comm_error = (value >> 4) & 0b1
+        self.sub_or_secondary_throttle = (value >> 5) & 0b1
+        self.neutral_start_protect = (value >> 6) & 0b1
+        self.engine_shutting_down = (value >> 7) & 0b1
+        self.manufacturer1 = (value >> 8) & 0b1
+        self.manufacturer2 = (value >> 9) & 0b1
+        self.manufacturer3 = (value >> 10) & 0b1
+        self.manufacturer4 = (value >> 11) & 0b1
+        self.manufacturer5 = (value >> 12) & 0b1
+        self.manufacturer6 = (value >> 13) & 0b1
+        self.manufacturer7 = (value >> 14) & 0b1
+        self.manufacturer8 = (value >> 15) & 0b1
 
     def __eq__(self, other):
         if isinstance(other, N2kDD223):
@@ -231,14 +231,14 @@ class N2kDD471(IntEnum):
 
     @events.setter
     def events(self, value):
-        self.motor_over_temperature_cutout = value >> 0 & 0b1
-        self.motor_over_current_cutout = value >> 1 & 0b1
-        self.low_oil_level_warning = value >> 2 & 0b1
-        self.oil_over_temperature_warning = value >> 3 & 0b1
-        self.controller_under_voltage_cutout = value >> 4 & 0b1
-        self.manufacturer_defined = value >> 5 & 0b1
-        self.reserved = value >> 6 & 0b1
-        self.data_not_available = value >> 7 & 0b1
+        self.motor_over_temperature_cutout = (value >> 0) & 0b1
+        self.motor_over_current_cutout = (value >> 1) & 0b1
+        self.low_oil_level_warning = (value >> 2) & 0b1
+        self.oil_over_temperature_warning = (value >> 3) & 0b1
+        self.controller_under_voltage_cutout = (value >> 4) & 0b1
+        self.manufacturer_defined = (value >> 5) & 0b1
+        self.reserved = (value >> 6) & 0b1
+        self.data_not_available = (value >> 7) & 0b1
 
 
 # Thruster Direction Control
@@ -267,8 +267,8 @@ class N2kDD475:
 
     @events.setter
     def events(self, value):
-        self.another_device_controlling_thruster = value >> 0 & 0b1
-        self.boat_speed_to_fast = value >> 1 & 0b1
+        self.another_device_controlling_thruster = (value >> 0) & 0b1
+        self.boat_speed_to_fast = (value >> 1) & 0b1
 
 
 # DD477 - Windlass Monitoring Events
@@ -285,9 +285,9 @@ class N2kDD477:
 
     @events.setter
     def events(self, value):
-        self.controller_under_voltage_cutout = value >> 0 & 0b1
-        self.controller_over_current_cutout = value >> 1 & 0b1
-        self.controller_over_temperature_cutout = value >> 2 & 0b1
+        self.controller_under_voltage_cutout = (value >> 0) & 0b1
+        self.controller_over_current_cutout = (value >> 1) & 0b1
+        self.controller_over_temperature_cutout = (value >> 2) & 0b1
         
 
 # DD478 - Windlass Control Events
@@ -300,7 +300,7 @@ class N2kDD478:
 
     @events.setter
     def events(self, value):
-        self.another_device_controlling_windlass = value >> 0 & 0b1
+        self.another_device_controlling_windlass = (value >> 0) & 0b1
 
 # DD480 - Windlass Motion States
 class N2kDD480(IntEnum):
@@ -344,11 +344,11 @@ class N2kDD483:
 
     @event.setter
     def event(self, value):
-        self.system_error = value >> 0 & 0b1
-        self.sensor_error = value >> 1 & 0b1
-        self.no_windlass_motion_detected = value >> 2 & 0b1
-        self.retrieval_docking_distance_reached = value >> 3 & 0b1
-        self.end_of_rode_reached = value >> 4 & 0b1
+        self.system_error = (value >> 0) & 0b1
+        self.sensor_error = (value >> 1) & 0b1
+        self.no_windlass_motion_detected = (value >> 2) & 0b1
+        self.retrieval_docking_distance_reached = (value >> 3) & 0b1
+        self.end_of_rode_reached = (value >> 4) & 0b1
                                  
 
 # DD484 - Windlass Direction Control
