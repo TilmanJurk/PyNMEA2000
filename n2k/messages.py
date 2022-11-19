@@ -804,7 +804,33 @@ def n2k_set_status_binary_on_status(bank_status: N2kBinaryStatus, item_status: N
 
 
 # Binary status report (PGN 127501)
-# TODO
+def set_n2k_binary_status_report(device_bank_instance: int, bank_status: N2kBinaryStatus) -> Message:
+    """
+    Binary Status Report (PGN 127501)
+
+    :param device_bank_instance: Device or Bank Instance
+    :param bank_status: Full bank status. Read single status by using :py:func:`n2k_get_status_on_binary_status`
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.BinaryStatusReport
+    msg.priority = 3
+    msg.add_uint_64((bank_status << 8) | (device_bank_instance & 0xff))
+    return msg
+
+
+class BinaryStatusReport(NamedTuple):
+    device_bank_instance: int
+    bank_status: N2kBinaryStatus
+
+
+def parse_n2k_binary_status_report(msg: Message) -> BinaryStatusReport:
+    index = IntRef(0)
+    vb = msg.get_uint_64(index)
+    return BinaryStatusReport(
+        device_bank_instance=vb & 0xff,
+        bank_status=vb >> 8,
+    )
 
 
 # Fluid level (PGN 127505)
