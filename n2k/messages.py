@@ -533,8 +533,50 @@ def parse_n2k_magnetic_variation(msg: Message) -> MagneticVariation:
     )
 
 
-# Engine parameters rapid (PGN 127488)
-# TODO
+# Engine Parameters Rapid (PGN 127488)
+def set_n2k_engine_parameters_rapid(engine_instance: int, engine_speed: float, engine_boost_pressure: float,
+                                    engine_tilt_trim: int) -> Message:
+    """
+    Engine Parameters Rapid (PGN 127488)
+
+    :param engine_instance: This field indicates the particular engine for which this
+        data applies. A single engine will have an instance of 0. Engines in multi-engine
+        boats will be numbered starting at 0 at the bow of the boat incrementing to n going
+        in towards the stern of the boat. For engines at the same distance from the bow are
+        stern, the engines are numbered starting from the port side and proceeding towards
+        the starboard side.
+    :param engine_speed: Rotational speed in RPM, stored at a precision of ¼ RPM
+    :param engine_boost_pressure: Turbocharger boost pressure in Pascal, stored at a precision of 100 Pa
+    :param engine_tilt_trim: Engine tilt or trim (positive or negative) in percent, stored as an integer.
+    :return: NMEA2000 message ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.EngineParametersRapid
+    msg.priority = 2
+    msg.add_byte_uint(engine_instance)
+    msg.add_2_byte_udouble(engine_speed, 0.25)
+    msg.add_2_byte_udouble(engine_boost_pressure, 100)
+    msg.add_byte_uint(engine_tilt_trim)  # TODO: this is proably incorrect and should instead be add_byte_int. Verify with Garmin Display
+    msg.add_byte_uint(0xff)  # reserved
+    msg.add_byte_uint(0xff)  # reserved
+    return msg
+
+
+class EngineParametersRapid(NamedTuple):
+    engine_instance: int
+    engine_speed: float
+    engine_boost_pressure: float
+    engine_tilt_trim: int
+
+
+def parse_n2k_engine_parameters_rapid(msg: Message) -> EngineParametersRapid:
+    index = IntRef(0)
+    return EngineParametersRapid(
+        engine_instance=msg.get_byte_uint(index),
+        engine_speed=msg.get_2_byte_udouble(0.25, index),
+        engine_boost_pressure=msg.get_2_byte_udouble(100, index),
+        engine_tilt_trim=msg.get_byte_uint(index),  # TODO: see above
+    )
 
 
 # Engine parameters dynamic (PGN 127489)
