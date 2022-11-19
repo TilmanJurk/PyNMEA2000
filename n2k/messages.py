@@ -719,7 +719,51 @@ def parse_n2k_transmission_parameters_dynamic(msg: Message) -> TransmissionParam
 
 
 # Trip Parameters, Engine (PGN 127497)
-# TODO
+def set_n2k_trip_parameters_engine(engine_instance: int, trip_fuel_used: float, fuel_rate_average: float,
+                                   fuel_rate_economy: float, instantaneous_fuel_economy: float) -> Message:
+    """
+    Trip Fuel Consumption by Engine (PGN 127497)
+
+    :param engine_instance: This field indicates the particular engine for which this
+        data applies. A single engine will have an instance of 0. Engines in multi-engine
+        boats will be numbered starting at 0 at the bow of the boat incrementing to n going
+        in towards the stern of the boat. For engines at the same distance from the bow are
+        stern, the engines are numbered starting from the port side and proceeding towards
+        the starboard side.
+    :param trip_fuel_used: Fuel used by this engine during the trip in Litres, precision 1L
+    :param fuel_rate_average: Fuel used on average by this engine in Litres per hour, precision 0.1L/h
+    :param fuel_rate_economy: in Litres per hour, precision 0.1L/h
+    :param instantaneous_fuel_economy: in Litres per hour, precision 0.1L/h
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.TripFuelConsumptionEngine
+    msg.priority = 2
+    msg.add_byte_uint(engine_instance)
+    msg.add_2_byte_udouble(trip_fuel_used, 1)
+    msg.add_2_byte_double(fuel_rate_average, 0.1)
+    msg.add_2_byte_double(fuel_rate_economy, 0.1)
+    msg.add_2_byte_double(instantaneous_fuel_economy, 0.1)
+    return msg
+
+
+class TripFuelConsumptionEngine(NamedTuple):
+    engine_instance: int
+    trip_fuel_used: float
+    fuel_rate_averate: float
+    fuel_rate_economy: float
+    instantaneous_fuel_economy: float
+
+
+def parse_n2k_trip_parameters_engine(msg: Message) -> TripFuelConsumptionEngine:
+    index = IntRef(0)
+    return TripFuelConsumptionEngine(
+        engine_instance=msg.get_byte_uint(index),
+        trip_fuel_used=msg.get_2_byte_udouble(1, index),
+        fuel_rate_averate=msg.get_2_byte_double(0.1, index),
+        fuel_rate_economy=msg.get_2_byte_double(0.1, index),
+        instantaneous_fuel_economy=msg.get_2_byte_double(0.1, index),
+    )
 
 
 N2kBinaryStatus = int
