@@ -29,6 +29,7 @@ autodoc_default_options = {
     'show-inheritance': True,
     'private-members': None,
 }
+typehints_defaults = 'comma'
 templates_path = ['_templates']
 exclude_patterns = []
 
