@@ -1587,6 +1587,30 @@ def set_n2k_gnss_data(sid: int, days_since_1970: int, seconds_since_midnight: fl
                       gnss_type: N2kGNSSType, gnss_method: N2kGNSSMethod, n_satellites: int, hdop: float, pdop: float,
                       geoidal_separation: float, n_reference_station: int, reference_station_type: Optional[N2kGNSSType],
                       reference_station_id: Optional[int], age_of_correction: Optional[float]) -> Message:
+    """
+    GNSS Position Data (PGN 129029)
+
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        different messages to indicate that they are measured at same time
+    :param days_since_1970: Days since 1.1.1970 UTC
+    :param seconds_since_midnight: Seconds since midnight, stored at a precision of 0.0001s (TODO: UTC?)
+    :param latitude: Latitude in degrees, precision approx 11 pico metre
+        (a fifth of the diameter of a helium atom, 1e-16 deg). Negative values indicate south, positive indicate north.
+    :param longitude: Longitude in degrees, precision approx 11 pico metre at the equator (1e-16 deg).
+        Negative values indicate west, positive indicate east.
+    :param altitude: Altitude in reference to the WGS-84 model in metres, precision 1 micrometer.
+    :param gnss_type: GNSS Type, see type
+    :param gnss_method: GNSS Method type, see type
+    :param n_satellites: Number of satellites used for the provided data
+    :param hdop: Horizontal Dilution Of Precision in meters, precision 0.01m
+    :param pdop: Positional Dilution Of Precision in meters, precision 0.01m
+    :param geoidal_separation: Geoidal separation in meters, precision 0.01m
+    :param n_reference_station: Number of Reference Stations
+    :param reference_station_type: Reference Station type, see type
+    :param reference_station_id: Reference Station ID
+    :param age_of_correction: Age of DGNSS Correction
+    :return: NMEA2000 Message, ready to be sent
+    """
     msg = Message()
     msg.pgn = PGN.GNSSPositionData
     msg.priority = 3
