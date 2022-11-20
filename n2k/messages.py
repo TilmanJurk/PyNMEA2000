@@ -1231,7 +1231,41 @@ def parse_n2k_water_depth(msg: Message) -> WaterDepth:
 
 
 # Distance log (PGN 128275)
-# TODO
+def set_n2k_distance_log(days_since_1970: int, seconds_since_midnight: float, log: int, trip_log: int) -> Message:
+    """
+    Distance Log (PGN 128275)
+
+    :param days_since_1970: Days since 1.1.1970 UTC
+    :param seconds_since_midnight: Seconds since midnight, stored at a precision of 0.0001s (TODO: UTC?)
+    :param log: Total distance traveled through the water since the installation of the device in meters.
+    :param trip_log: Total distance traveled through the water since the last trip reset in meters.
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.DistanceLog
+    msg.priority = 6
+    msg.add_2_byte_uint(days_since_1970)
+    msg.add_4_byte_udouble(seconds_since_midnight, 0.0001)
+    msg.add_4_byte_uint(log)
+    msg.add_4_byte_uint(trip_log)
+    return msg
+
+
+class DistanceLog(NamedTuple):
+    days_since_1970: int
+    seconds_since_midnight: float
+    log: int
+    trip_log: int
+
+
+def parse_n2k_distance_log(msg: Message) -> DistanceLog:
+    index = IntRef(0)
+    return DistanceLog(
+        days_since_1970=msg.get_2_byte_uint(index),
+        seconds_since_midnight=msg.get_4_byte_udouble(0.0001, index),
+        log=msg.get_4_byte_uint(index),
+        trip_log=msg.get_4_byte_uint(index),
+    )
 
 
 # Anchor Windlass Control Status (PGN 128776)
