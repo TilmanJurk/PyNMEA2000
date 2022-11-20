@@ -245,7 +245,7 @@ def set_n2k_heading_track_control(rudder_limit_exceeded: N2kOnOff, off_heading_l
         (override & 0x03) << 6
     )
     msg.add_byte_uint(
-        (steering_mode & 0x07) << 0|
+        (steering_mode & 0x07) << 0 |
         (turn_mode & 0x07) << 3 |
         (heading_reference & 0x03) << 6
     )
@@ -340,8 +340,8 @@ def set_n2k_rudder(rudder_position: float, instance: int = 0,
     msg.add_byte_uint((rudder_direction_order & 0x07) | 0xf8)
     msg.add_2_byte_double(angle_order, 0.0001)
     msg.add_2_byte_double(rudder_position, 0.0001)
-    msg.add_byte_uint(0xff) # reserved
-    msg.add_byte_uint(0xff) # reserved
+    msg.add_byte_uint(0xff)  # reserved
+    msg.add_byte_uint(0xff)  # reserved
     return msg
 
 
@@ -496,7 +496,8 @@ def parse_n2k_attitude(msg: Message) -> Attitude:
 
 
 # Magnetic Variation (PGN 127258)
-def set_n2k_magnetic_variation(sid: int, source: N2kMagneticVariation, days_since_1970: int, variation: float) -> Message:
+def set_n2k_magnetic_variation(sid: int, source: N2kMagneticVariation, days_since_1970: int,
+                               variation: float) -> Message:
     """
     Magnetic Variation (PGN 127258)
 
@@ -783,10 +784,11 @@ def n2k_get_status_on_binary_status(bank_status: N2kBinaryStatus, item_index: in
     if item_index > 27:
         return N2kOnOff.Unavailable
 
-    return N2kOnOff((bank_status >> (2* item_index)) & 0x03)
+    return N2kOnOff((bank_status >> (2 * item_index)) & 0x03)
 
 
-def n2k_set_status_binary_on_status(bank_status: N2kBinaryStatus, item_status: N2kOnOff, item_index: int = 1) -> N2kBinaryStatus:
+def n2k_set_status_binary_on_status(bank_status: N2kBinaryStatus, item_status: N2kOnOff,
+                                    item_index: int = 1) -> N2kBinaryStatus:
     """
     Set single status to full binary bank status.
     
@@ -1191,7 +1193,7 @@ def parse_n2k_boat_speed(msg: Message) -> BoatSpeed:
 
 
 # Water depth (PGN 128267)
-def set_n2k_water_depth(sid: int, depth_below_transducer: float, offset: float, range: float) -> Message:
+def set_n2k_water_depth(sid: int, depth_below_transducer: float, offset: float, max_range: float) -> Message:
     """
     Water Depth (PGN 128267)
 
@@ -1200,7 +1202,7 @@ def set_n2k_water_depth(sid: int, depth_below_transducer: float, offset: float, 
     :param depth_below_transducer: Water depth below transducer in meters, precision 0.01m
     :param offset: Distance in meters between transducer and water surface (positive) or transducer and keel (negative),
         precision 0.001m
-    :param range: maximum depth that can be measured
+    :param max_range: maximum depth that can be measured
     :return: NMEA2000 Message, ready to be sent
     """
     msg = Message()
@@ -1209,7 +1211,7 @@ def set_n2k_water_depth(sid: int, depth_below_transducer: float, offset: float, 
     msg.add_byte_uint(sid)
     msg.add_4_byte_udouble(depth_below_transducer, 0.01)
     msg.add_2_byte_double(offset, 0.001)
-    msg.add_1_byte_udouble(range, 10)
+    msg.add_1_byte_udouble(max_range, 10)
     return msg
 
 
@@ -1217,7 +1219,7 @@ class WaterDepth(NamedTuple):
     sid: int
     depth_below_transducer: float
     offset: float
-    range: float
+    max_range: float
 
 
 def parse_n2k_water_depth(msg: Message) -> WaterDepth:
@@ -1226,7 +1228,7 @@ def parse_n2k_water_depth(msg: Message) -> WaterDepth:
         sid=msg.get_byte_uint(index),
         depth_below_transducer=msg.get_4_byte_udouble(0.01, index),
         offset=msg.get_2_byte_double(0.001, index),
-        range=msg.get_1_byte_udouble(10, index),
+        max_range=msg.get_1_byte_udouble(10, index),
     )
 
 
