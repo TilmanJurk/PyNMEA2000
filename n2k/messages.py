@@ -10,7 +10,8 @@ from n2k.types import N2kTimeSource, N2kAISRepeat, N2kAISTransceiverInformation,
     N2kEngineDiscreteStatus1, N2kEngineDiscreteStatus2, N2kTransmissionGear, N2kTransmissionDiscreteStatus1, \
     N2kFluidType, N2kDCType, N2kChargeState, N2kChargerMode, N2kBatType, N2kBatEqSupport, N2kBatNomVolt, N2kBatChem, \
     N2kSpeedWaterReferenceType, N2kWindlassDirectionControl, N2kSpeedType, N2kGenericStatusPair, \
-    N2kWindlassControlEvents
+    N2kWindlassControlEvents, N2kWindlassMotionStates, N2kRodeTypeStates, N2kAnchorDockingStates, \
+    N2kWindlassOperatingEvents
 from n2k.constants import *
 from n2k.utils import IntRef
 
@@ -1379,7 +1380,73 @@ def parse_n2k_anchor_windlass_control_status(msg: Message) -> AnchorWindlassCont
 
 
 # Anchor Windlass Operating Status (PGN 128777)
-# TODO
+def set_n2k_anchor_windlass_operating_status(
+        sid: int, windlass_identifier: int, rode_counter_value: float,
+        windlass_line_speed: float,
+        windlass_motion_status: N2kWindlassMotionStates = N2kWindlassMotionStates.Unavailable,
+        rode_type_status: N2kRodeTypeStates = N2kRodeTypeStates.Unavailable,
+        anchor_docking_status: N2kAnchorDockingStates = N2kAnchorDockingStates.DataNotAvailable,
+        windlass_operating_events: N2kWindlassOperatingEvents = N2kWindlassOperatingEvents(0)
+    ) -> Message:
+    """
+    Anchor Windlass Operating Status (PGN 128777)
+
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        different messages to indicate that they are measured at same time
+    :param windlass_identifier: Identifier of the windlass instance
+    :param rode_counter_value: Amount of rode deployed, in metres
+    :param windlass_line_speed: Deployment speed in metres per second
+    :param windlass_motion_status: see type
+    :param rode_type_status: see type
+    :param anchor_docking_status: see type
+    :param windlass_operating_events: see type
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.AnchorWindlassOperatingStatus
+    msg.add_byte_uint(sid)
+    msg.add_byte_uint(windlass_identifier)
+    msg.add_byte_uint(0xf0 | ((rode_type_status & 0x03) << 2) | (windlass_motion_status & 0x03))
+    msg.add_2_byte_udouble(rode_counter_value, 0.1)
+    msg.add_2_byte_udouble(windlass_line_speed, 0.01)
+    msg.add_byte_uint((windlass_operating_events.event << 2) | (anchor_docking_status & 0x03))
+    return msg
+
+
+class AnchorWindlassOperatingStatus(NamedTuple):
+    sid: int
+    windlass_identifier: int
+    rode_counter_value: float
+    windlass_line_speed: float
+    windlass_motion_status: N2kWindlassMotionStates
+    rode_type_status: N2kRodeTypeStates
+    anchor_docking_status: N2kAnchorDockingStates
+    windlass_operating_events: N2kWindlassOperatingEvents
+
+
+def parse_n2k_anchor_windlass_operating_status(msg: Message) -> AnchorWindlassOperatingStatus:
+    index = IntRef(0)
+
+    sid = msg.get_byte_uint(index)
+    windlass_identifier = msg.get_byte_uint(index)
+    vb = msg.get_byte_uint(index)
+    windlass_motion_status = N2kWindlassMotionStates(vb & 0x03)
+    rode_type_status = N2kRodeTypeStates((vb >> 2) & 0x03)
+    rode_counter_value = msg.get_2_byte_udouble(0.1, index)
+    windlass_line_speed = msg.get_2_byte_udouble(0.01, index)
+    vb = msg.get_byte_uint(index)
+    anchor_docking_status = N2kAnchorDockingStates(vb & 0x03)
+    windlass_operating_events = N2kWindlassOperatingEvents(vb >> 2)
+    return AnchorWindlassOperatingStatus(
+        sid=sid,
+        windlass_identifier=windlass_identifier,
+        rode_counter_value=rode_counter_value,
+        windlass_line_speed=windlass_line_speed,
+        windlass_motion_status=windlass_motion_status,
+        rode_type_status=rode_type_status,
+        anchor_docking_status=anchor_docking_status,
+        windlass_operating_events=windlass_operating_events,
+    )
 
 
 # Anchor Windlass Monitoring Status (PGN 128778)

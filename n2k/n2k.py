@@ -39,6 +39,7 @@ class PGN(IntEnum):
     BoatSpeed = 128259  # prio: 2, period: 1000
     WaterDepth = 128267  # prio: 3, period: 1000
     AnchorWindlassControlStatus = 128776  # prio: 2, period: NA
+    AnchorWindlassOperatingStatus = 128777  # prio: 2, period: NA
     LatLonRapid = 129025  # prio: 2, period: 100
     CogSogRapid = 129026  # prio: 2, period: 250
     CrossTrackError = 129283  # prio: 3, period: 1000

@@ -338,6 +338,9 @@ class N2kDD483:
     retrieval_docking_distance_reached: int = 0
     end_of_rode_reached: int = 0
 
+    def __init__(self, value):
+        self.event = value
+
     @property
     def event(self):
         return self.system_error << 0 | \
