@@ -20,6 +20,7 @@ Welcome to NMEA2000's documentation!
    message_handler
    stream
    n2k
+   nmea2000_std_types
    types
 
 
