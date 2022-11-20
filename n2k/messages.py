@@ -8,7 +8,7 @@ from n2k.types import N2kTimeSource, N2kAISRepeat, N2kAISTransceiverInformation,
     N2kHeadingReference, N2kMOBEmitterBatteryStatus, N2kOnOff, N2kSteeringMode, N2kTurnMode, N2kRudderDirectionOrder, \
     ProductInformation, ConfigurationInformation, N2kWindReference, N2kGNSSType, N2kGNSSMethod, N2kMagneticVariation, \
     N2kEngineDiscreteStatus1, N2kEngineDiscreteStatus2, N2kTransmissionGear, N2kTransmissionDiscreteStatus1, \
-    N2kFluidType, N2kDCType, N2kChargeState, N2kChargerMode
+    N2kFluidType, N2kDCType, N2kChargeState, N2kChargerMode, N2kBatType, N2kBatEqSupport, N2kBatNomVolt, N2kBatChem
 from n2k.constants import *
 from n2k.utils import IntRef
 
@@ -1035,7 +1035,79 @@ def parse_n2k_battery_status(msg: Message) -> BatteryStatus:
 
 
 # Battery Configuration Status (PGN 127513)
-# TODO
+def set_n2k_battery_configuration_status(battery_instance: int, battery_type: N2kBatType,
+                                         supports_equal: N2kBatEqSupport, battery_nominal_voltage: N2kBatNomVolt,
+                                         battery_chemistry: N2kBatChem, battery_capacity: float,
+                                         battery_temperature_coefficient: int, peukert_exponent: float,
+                                         charge_efficiency_factor: int) -> Message:
+    """
+    Battery Configuration Status (PGN 127513)
+
+    :param battery_instance: Battery Instance
+    :param battery_type: Battery Type, see type
+    :param supports_equal: Whether the battery supports equalization
+    :param battery_nominal_voltage: Battery nominal voltage, see type
+    :param battery_chemistry: Battery chemistry, see type
+    :param battery_capacity: Battery capacity in Coulombs (aka Ampere Seconds), stored at a precision of 1Ah
+    :param battery_temperature_coefficient: Battery temperature coefficient in %
+    :param peukert_exponent: Peukert Exponent, describing the relation between discharge rate and effective capacity.
+        Value between 1.0 and 1.504
+    :param charge_efficiency_factor: Charge efficiency factor
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.BatteryConfigurationStatus
+    msg.priority = 6
+    msg.add_byte_uint(battery_instance)
+    msg.add_byte_uint(0xc0 | ((supports_equal & 0x03) << 4) | (battery_type & 0x0f))  # BatType (4 bit), SupportsEqual (2 bit), Reserved (2 bit)
+    msg.add_byte_uint(((battery_chemistry & 0x0f) << 4) | (battery_nominal_voltage & 0x0f))
+    msg.add_2_byte_double(battery_capacity, 3600)
+    msg.add_byte_uint(battery_temperature_coefficient)
+    # Original code was unsure if this is correct.
+    # I am fairly certain it is as the exponent can't be better than 1 and shouldn't be worse than 1.5
+    peukert_exponent -= 1
+    if peukert_exponent < 0 or peukert_exponent > 0.504:
+        msg.add_byte_uint(0xff)
+    else:
+        msg.add_1_byte_udouble(peukert_exponent, 0.002, -1)
+    msg.add_byte_uint(charge_efficiency_factor)
+    return msg
+
+
+class BatteryConfigurationStatus(NamedTuple):
+    battery_instance: int
+    battery_type: N2kBatType
+    supports_equal: N2kBatEqSupport
+    battery_nominal_voltage: N2kBatNomVolt
+    battery_chemistry: N2kBatChem
+    battery_capacity: float
+    battery_temperature_coefficient: int
+    peukert_exponent: float
+    charge_efficiency_factor: int
+
+
+def parse_n2k_battery_configuration_status(msg: Message) -> BatteryConfigurationStatus:
+    index = IntRef(0)
+
+    battery_instance = msg.get_byte_uint(index)
+    vb = msg.get_byte_uint(index)
+    battery_type = N2kBatType(vb & 0x0f)
+    supports_equal = N2kBatEqSupport((vb >> 4) & 0x03)
+    vb = msg.get_byte_uint(index)
+    battery_nominal_voltage = N2kBatNomVolt(vb & 0x0f)
+    battery_chemistry = N2kBatChem((vb >> 4) & 0x0f)
+
+    return BatteryConfigurationStatus(
+        battery_instance=battery_instance,
+        battery_type=battery_type,
+        supports_equal=supports_equal,
+        battery_nominal_voltage=battery_nominal_voltage,
+        battery_chemistry=battery_chemistry,
+        battery_capacity=msg.get_2_byte_double(3600, index),
+        battery_temperature_coefficient=msg.get_byte_uint(index),
+        peukert_exponent=msg.get_1_byte_udouble(0.002, index) + 1,
+        charge_efficiency_factor=msg.get_byte_uint(index),
+    )
 
 
 # Leeway (PGN 128000)
