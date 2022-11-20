@@ -991,7 +991,47 @@ def parse_n2k_charger_status(msg: Message) -> ChargerStatus:
 
 
 # Battery Status (PGN 127508)
-# TODO
+def set_n2k_battery_status(battery_instance: int, battery_voltage: float, battery_current: float,
+                           battery_temperature: float, sid: int) -> Message:
+    """
+    Battery Status (PGN 127508)
+
+    :param battery_instance: Battery Instance
+    :param battery_voltage: Battery Voltage in Volt, precision 0.01V
+    :param battery_current: Battery Current in Ampere, precision 0.1A
+    :param battery_temperature: Battery Temperature in Kelvin, precision 0.01K
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        different messages to indicate that they are measured at same time
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.BatteryStatus
+    msg.priority = 6
+    msg.add_byte_uint(battery_instance)
+    msg.add_2_byte_double(battery_voltage, 0.01)
+    msg.add_2_byte_double(battery_current, 0.1)
+    msg.add_2_byte_udouble(battery_temperature, 0.01)
+    msg.add_byte_uint(sid)
+    return msg
+
+
+class BatteryStatus(NamedTuple):
+    battery_instance: int
+    battery_voltage: float
+    battery_current: float
+    battery_temperature: float
+    sid: int
+
+
+def parse_n2k_battery_status(msg: Message) -> BatteryStatus:
+    index = IntRef(0)
+    return BatteryStatus(
+        battery_instance=msg.get_byte_uint(index),
+        battery_voltage=msg.get_2_byte_double(0.01, index),
+        battery_current=msg.get_2_byte_double(0.1, index),
+        battery_temperature=msg.get_2_byte_udouble(0.01, index),
+        sid=msg.get_byte_uint(index),
+    )
 
 
 # Battery Configuration Status (PGN 127513)
