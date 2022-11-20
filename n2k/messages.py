@@ -1803,8 +1803,85 @@ def parse_n2k_gnss_dop(msg: Message) -> GNSSDOPData:
     )
 
 
+MAX_SATELLITE_INFO_COUNT = 18  # Maximum amount of satellites that fit into fast packet. TODO: extend using tp message
+
+
+class SatelliteInfo(NamedTuple):
+    # TODO: figure out a way to type NamedTuples properly.
+    prn: int
+    elevation: float
+    azimuth: float
+    snr: float
+    range_residuals: float
+    usage_status: N2kPRNUsageStatus
+
+
 # GNSS Satellites in View (PGN 129540)
-# TODO !!!
+def set_n2k_gnss_satellites_in_view(sid: int, mode: N2kRangeResidualMode, satellites: List[SatelliteInfo]) -> Message:
+    """
+    GNSS Satellites in View (PGN 129540)
+
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        different messages to indicate that they are measured at same time
+    :param mode: Range residual mode
+    :param satellites: List of the info of the satellites used
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.GNSSSatellitesInView
+    msg.priority = 6
+    msg.add_byte_uint(sid)
+    msg.add_byte_uint(mode | 0xfc)  # 2 bit mode, 6 bit reserved
+
+    if len(satellites) > MAX_SATELLITE_INFO_COUNT:
+        # TODO: Log warning
+        satellites = satellites[:MAX_SATELLITE_INFO_COUNT]
+    msg.add_byte_uint(len(satellites))
+
+    for satellite in satellites:
+        msg.add_byte_uint(satellite.prn)
+        msg.add_2_byte_double(satellite.elevation, 1e-4)
+        msg.add_2_byte_udouble(satellite.azimuth, 1e-4)
+        msg.add_2_byte_double(satellite.snr, 1e-2)
+        msg.add_4_byte_double(satellite.range_residuals, 1e-4)
+        msg.add_byte_uint(satellite.usage_status | 0xf0)
+
+    return msg
+
+
+class GNSSSatellitesInView(NamedTuple):
+    sid: int
+    mode: N2kRangeResidualMode
+    satellites: List[SatelliteInfo]
+
+
+def parse_n2k_gnss_satellites_in_view(msg: Message) -> GNSSSatellitesInView:
+    index = IntRef(0)
+
+    sid = msg.get_byte_uint(index)
+    mode = N2kRangeResidualMode(msg.get_byte_uint(index) & 0x03)
+    number_of_satellites = msg.get_byte_uint(index)
+    satellites = []
+
+    if number_of_satellites > MAX_SATELLITE_INFO_COUNT:
+        # TODO: Log warning
+        pass
+    else:
+        for i in range(number_of_satellites):
+            satellites.append(SatelliteInfo(
+                prn=msg.get_byte_uint(index),
+                elevation=msg.get_2_byte_double(1e-4, index),
+                azimuth=msg.get_2_byte_udouble(1e-4, index),
+                snr=msg.get_2_byte_double(1e-2, index),
+                range_residuals=msg.get_4_byte_double(1e-5, index),
+                usage_status=N2kPRNUsageStatus(msg.get_byte_uint(index) & 0x0f),
+            ))
+
+    return GNSSSatellitesInView(
+        sid=sid,
+        mode=mode,
+        satellites=satellites,
+    )
 
 
 # AIS static data class A (PGN 129794)
