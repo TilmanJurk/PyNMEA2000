@@ -1753,7 +1753,54 @@ def parse_n2k_date_time_local_offset(msg: Message) -> DateTimeLocalOffset:
 
 
 # GNSS DOP data (PGN 129539)
-# TODO !!!
+def set_n2k_gnss_dop(sid: int, desired_mode: N2kGNSSDOPmode, actual_mode: N2kGNSSDOPmode, hdop: float, vdop: float,
+                     tdop: float) -> Message:
+    """
+    GNSS DOP Data (PGN 129539)
+
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        different messages to indicate that they are measured at same time
+    :param desired_mode: Desired DOP Mode
+    :param actual_mode: Actual DOP Mode
+    :param hdop: Horizontal Dilution of Precision in meters.
+    :param vdop: Vertical Dilution of Precision in meters.
+    :param tdop: Time Dilution of Precision
+    :return: NMEA2000 message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.GNSSDOPData
+    msg.priority = 6
+    msg.add_byte_uint(sid)
+    msg.add_byte_uint((desired_mode & 0x07) << 5 | ((actual_mode & 0x07) << 2))
+    msg.add_2_byte_double(hdop, 0.01)
+    msg.add_2_byte_double(vdop, 0.01)
+    msg.add_2_byte_double(tdop, 0.01)
+    return msg
+
+
+class GNSSDOPData(NamedTuple):
+    sid: int
+    desired_mode: N2kGNSSDOPmode
+    actual_mode: N2kGNSSDOPmode
+    hdop: float
+    vdop: float
+    tdop: float
+
+
+def parse_n2k_gnss_dop(msg: Message) -> GNSSDOPData:
+    index = IntRef(0)
+
+    sid = msg.get_byte_uint(index)
+    vb = msg.get_byte_uint(index)
+
+    return GNSSDOPData(
+        sid=sid,
+        desired_mode=N2kGNSSDOPmode((vb >> 5) & 0x07),
+        actual_mode=N2kGNSSDOPmode((vb >> 2) & 0x07),
+        hdop=msg.get_2_byte_double(0.01, index),
+        vdop=msg.get_2_byte_double(0.01, index),
+        tdop=msg.get_2_byte_double(0.01, index),
+    )
 
 
 # GNSS Satellites in View (PGN 129540)

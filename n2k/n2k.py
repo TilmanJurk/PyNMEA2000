@@ -90,6 +90,7 @@ class PGN(IntEnum):
     TimeToMark = 129301  # prio: 3, period: 1000
     BearingAndDistanceBetweenTwoMarks = 129302  # prio: 6, period: NA
     GNSSControlStatus = 129538  # prio: 6, period: NA
+    GNSSDOPData = 129539  # prio: 6, period: NA
     GNSSSatellitesInView = 129540  # prio: 6, period: 1000
     GPSAlmanacData = 129541  # prio: 6, period: NA
     GNSSPseudorangeNoiseStatistics = 129542  # prio: 6, period: 1000
