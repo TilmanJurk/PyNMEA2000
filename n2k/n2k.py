@@ -35,6 +35,7 @@ class PGN(IntEnum):
     FluidLevel = 127505  # prio: 6, period: 2500
     BatteryStatus = 127508  # prio: 6, period: 1500
     MagneticVariation = 127258  # prio: 6, period: NA
+    Leeway = 128000  # prio: 4, period: NA
     BoatSpeed = 128259  # prio: 2, period: 1000
     WaterDepth = 128267  # prio: 3, period: 1000
     LatLonRapid = 129025  # prio: 2, period: 100

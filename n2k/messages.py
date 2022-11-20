@@ -1111,7 +1111,40 @@ def parse_n2k_battery_configuration_status(msg: Message) -> BatteryConfiguration
 
 
 # Leeway (PGN 128000)
-# TODO
+def set_n2k_leeway(sid: int, leeway: float) -> Message:
+    """
+    Leeway (PGN 128000)
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        different messages to indicate that they are measured at same time
+    :param leeway: Positive angles indicate slippage to starboard, that is, the vessel is tracking to the right of its
+        heading, and negative angles indicate slippage to port. Angle in radians, stored at a precision of 0.0001rad
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.Leeway
+    msg.priority = 4
+    msg.add_byte_uint(sid)
+    msg.add_2_byte_double(leeway, 0.0001)
+    msg.add_byte_uint(0xff)  # Reserved
+    msg.add_byte_uint(0xff)  # Reserved
+    msg.add_byte_uint(0xff)  # Reserved
+    msg.add_byte_uint(0xff)  # Reserved
+    msg.add_byte_uint(0xff)  # Reserved
+    return msg
+
+
+class Leeway(NamedTuple):
+    sid: int
+    leeway: float
+
+
+def parse_n2k_leeway(msg: Message) -> Leeway:
+    index = IntRef(0)
+
+    return Leeway(
+        sid=msg.get_byte_uint(index),
+        leeway=msg.get_2_byte_double(0.0001, index)
+    )
 
 
 # Boat Speed (PGN 128259)
