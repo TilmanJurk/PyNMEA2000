@@ -1,18 +1,9 @@
-import math
-from typing import NamedTuple, List, Optional
+from typing import List, Optional
 
 from n2k.device_information import DeviceInformation
 from n2k.n2k import PGN
 from n2k.message import Message
-from n2k.nmea2000_std_types import N2kDD480
-from n2k.types import N2kTimeSource, N2kAISRepeat, N2kAISTransceiverInformation, N2kMOBStatus, N2kMOBPositionSource, \
-    N2kHeadingReference, N2kMOBEmitterBatteryStatus, N2kOnOff, N2kSteeringMode, N2kTurnMode, N2kRudderDirectionOrder, \
-    ProductInformation, ConfigurationInformation, N2kWindReference, N2kGNSSType, N2kGNSSMethod, N2kMagneticVariation, \
-    N2kEngineDiscreteStatus1, N2kEngineDiscreteStatus2, N2kTransmissionGear, N2kTransmissionDiscreteStatus1, \
-    N2kFluidType, N2kDCType, N2kChargeState, N2kChargerMode, N2kBatType, N2kBatEqSupport, N2kBatNomVolt, N2kBatChem, \
-    N2kSpeedWaterReferenceType, N2kWindlassDirectionControl, N2kSpeedType, N2kGenericStatusPair, \
-    N2kWindlassControlEvents, N2kWindlassMotionStates, N2kRodeTypeStates, N2kAnchorDockingStates, \
-    N2kWindlassOperatingEvents, N2kWindlassMonitoringEvents
+from n2k.types import *
 from n2k.constants import *
 from n2k.utils import IntRef
 
