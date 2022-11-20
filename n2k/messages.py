@@ -12,7 +12,7 @@ from n2k.types import N2kTimeSource, N2kAISRepeat, N2kAISTransceiverInformation,
     N2kFluidType, N2kDCType, N2kChargeState, N2kChargerMode, N2kBatType, N2kBatEqSupport, N2kBatNomVolt, N2kBatChem, \
     N2kSpeedWaterReferenceType, N2kWindlassDirectionControl, N2kSpeedType, N2kGenericStatusPair, \
     N2kWindlassControlEvents, N2kWindlassMotionStates, N2kRodeTypeStates, N2kAnchorDockingStates, \
-    N2kWindlassOperatingEvents
+    N2kWindlassOperatingEvents, N2kWindlassMonitoringEvents
 from n2k.constants import *
 from n2k.utils import IntRef
 
@@ -1452,7 +1452,59 @@ def parse_n2k_anchor_windlass_operating_status(msg: Message) -> AnchorWindlassOp
 
 
 # Anchor Windlass Monitoring Status (PGN 128778)
-# TODO
+def set_n2k_anchor_windlass_monitoring_status(
+        sid: int,
+        windlass_identifier: int,
+        total_motor_time: float,
+        controller_voltage: float = N2K_DOUBLE_NA,
+        motor_current: float = N2K_DOUBLE_NA,
+        windlass_monitoring_events: N2kWindlassMonitoringEvents = N2kWindlassMonitoringEvents()
+    ) -> Message:
+    """
+    Anchor Windlass Monitoring Status (PGN 128778)
+
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        different messages to indicate that they are measured at same time
+    :param windlass_identifier: Identifier of the windlass instance
+    :param total_motor_time: Total runtime of the motor in seconds
+    :param controller_voltage: Voltage in Volts, precision 0.2V
+    :param motor_current: Current in Amperes, precision 1A
+    :param windlass_monitoring_events: see type
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.AnchorWindlassMonitoringStatus
+    msg.priority = 2
+    msg.add_byte_uint(sid)
+    msg.add_byte_uint(windlass_identifier)
+    msg.add_byte_uint(windlass_monitoring_events.events)
+    msg.add_1_byte_udouble(controller_voltage, 0.2)
+    msg.add_1_byte_udouble(motor_current, 1.0)
+    msg.add_2_byte_udouble(total_motor_time, 60.0)
+    msg.add_byte_uint(0xff)
+    return msg
+
+
+class AnchorWindlassMonitoringStatus(NamedTuple):
+    sid: int
+    windlass_identifier: int
+    total_motor_time: float
+    controller_voltage: float
+    motor_current: float
+    windlass_monitoring_events: N2kWindlassMonitoringEvents
+
+
+def parse_n2k_anchor_windlass_monitoring_status(msg: Message) -> AnchorWindlassMonitoringStatus:
+    index = IntRef(0)
+
+    return AnchorWindlassMonitoringStatus(
+        sid=msg.get_byte_uint(index),
+        windlass_identifier=msg.get_byte_uint(index),
+        windlass_monitoring_events=N2kWindlassMonitoringEvents(msg.get_byte_uint(index)),
+        controller_voltage=msg.get_1_byte_udouble(0.2, index),
+        motor_current=msg.get_1_byte_udouble(1.0, index),
+        total_motor_time=msg.get_2_byte_udouble(60.0, index),
+    )
 
 
 # Lat/lon rapid (PGN 129025)
