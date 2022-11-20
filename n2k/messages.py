@@ -4,6 +4,7 @@ from typing import NamedTuple, List, Optional
 from n2k.device_information import DeviceInformation
 from n2k.n2k import PGN
 from n2k.message import Message
+from n2k.nmea2000_std_types import N2kDD480
 from n2k.types import N2kTimeSource, N2kAISRepeat, N2kAISTransceiverInformation, N2kMOBStatus, N2kMOBPositionSource, \
     N2kHeadingReference, N2kMOBEmitterBatteryStatus, N2kOnOff, N2kSteeringMode, N2kTurnMode, N2kRudderDirectionOrder, \
     ProductInformation, ConfigurationInformation, N2kWindReference, N2kGNSSType, N2kGNSSMethod, N2kMagneticVariation, \
@@ -1274,19 +1275,20 @@ def parse_n2k_distance_log(msg: Message) -> DistanceLog:
 
 
 # Anchor Windlass Control Status (PGN 128776)
-def set_n2k_anchor_windlass_control_status(sid: int,
-                                           windlass_identifier: int,
-                                           windlass_direction_control: N2kWindlassDirectionControl,
-                                           speed_control: int,
-                                           speed_control_type: N2kSpeedType,
-                                           anchor_docking_control: N2kGenericStatusPair,
-                                           power_enable: N2kGenericStatusPair,
-                                           mechanical_lock: N2kGenericStatusPair,
-                                           deck_and_anchor_wash: N2kGenericStatusPair,
-                                           anchor_light: N2kGenericStatusPair,
-                                           command_timeout: float,
-                                           windlass_control_events: N2kWindlassControlEvents
-                                           ) -> Message:
+def set_n2k_anchor_windlass_control_status(
+        sid: int,
+        windlass_identifier: int,
+        windlass_direction_control: N2kWindlassDirectionControl,
+        speed_control: int,
+        speed_control_type: N2kSpeedType,
+        anchor_docking_control: N2kGenericStatusPair,
+        power_enable: N2kGenericStatusPair,
+        mechanical_lock: N2kGenericStatusPair,
+        deck_and_anchor_wash: N2kGenericStatusPair,
+        anchor_light: N2kGenericStatusPair,
+        command_timeout: float,
+        windlass_control_events: N2kWindlassControlEvents,
+    ) -> Message:
     """
     Anchor Windlass Control Status (PGN 128776)
 
