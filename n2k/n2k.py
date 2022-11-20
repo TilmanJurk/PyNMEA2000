@@ -43,6 +43,7 @@ class PGN(IntEnum):
     AnchorWindlassMonitoringStatus = 128778  # prio: 2, period: NA
     LatLonRapid = 129025  # prio: 2, period: 100
     CogSogRapid = 129026  # prio: 2, period: 250
+    DateTimeLocalOffset = 129033  # prio: 3, period: NA
     CrossTrackError = 129283  # prio: 3, period: 1000
     WindSpeed = 130306  # prio: 2, period: 100
     OutsideEnvironmentalParameters = 130310  # prio: 5, period: 500

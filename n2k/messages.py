@@ -1703,7 +1703,38 @@ def parse_n2k_gnss_data(msg: Message) -> GNSSPositionData:
 
 
 # Date,Time & Local offset (PGN 129033, see also PGN 126992)
-# TODO !!!
+def set_n2k_date_time_local_offset(days_since_1970: int, seconds_since_midnight: float, local_offset: int) -> Message:
+    """
+    Date, Time & Local offset (PGN 129033), see also PGN 126992
+
+    :param days_since_1970: Days since 1.1.1970 UTC
+    :param seconds_since_midnight: Seconds since midnight, stored at a precision of 0.0001s (TODO: UTC?)
+    :param local_offset: Local offset in minutes
+    :return:
+    """
+    msg = Message()
+    msg.pgn = PGN.DateTimeLocalOffset
+    msg.priority = 3
+    msg.add_2_byte_uint(days_since_1970)
+    msg.add_4_byte_udouble(seconds_since_midnight, 0.0001)
+    msg.add_2_byte_int(local_offset)
+    return msg
+
+
+class DateTimeLocalOffset(NamedTuple):
+    days_since_1970: int
+    seconds_since_midnight: float
+    local_offset: int
+
+
+def parse_n2k_date_time_local_offset(msg: Message) -> DateTimeLocalOffset:
+    index = IntRef(0)
+
+    return DateTimeLocalOffset(
+        days_since_1970=msg.get_2_byte_uint(index),
+        seconds_since_midnight=msg.get_4_byte_udouble(0.0001, index),
+        local_offset=msg.get_2_byte_int(index),
+    )
 
 
 # AIS position reports for Class A (PGN 129038)
