@@ -1386,7 +1386,7 @@ def set_n2k_anchor_windlass_operating_status(
         windlass_motion_status: N2kWindlassMotionStates = N2kWindlassMotionStates.Unavailable,
         rode_type_status: N2kRodeTypeStates = N2kRodeTypeStates.Unavailable,
         anchor_docking_status: N2kAnchorDockingStates = N2kAnchorDockingStates.DataNotAvailable,
-        windlass_operating_events: N2kWindlassOperatingEvents = N2kWindlassOperatingEvents(0)
+        windlass_operating_events: N2kWindlassOperatingEvents = N2kWindlassOperatingEvents()
     ) -> Message:
     """
     Anchor Windlass Operating Status (PGN 128777)

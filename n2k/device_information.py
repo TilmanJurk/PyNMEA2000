@@ -7,6 +7,16 @@ class DeviceInformation:
     # https://github.com/ttlappalainen/NMEA2000/blob/master/src/NMEA2000.h#L133
     system_instance: int = 0  # 4 bits
     industry_group: int = 4  # 4 bits (actually 3 bits but the upper is always set)
+
+    def __init__(self, unique_number: int, manufacturer_code: int, device_function: int, device_class: int,
+                 device_instance: int = 0, system_instance: int = 0, industry_group: int = 4):
+        self.unique_number = unique_number
+        self.manufacturer_code = manufacturer_code
+        self.device_function = device_function
+        self.device_class = device_class
+        self.device_instance = device_instance
+        self.system_instance = system_instance
+        self.industry_group = industry_group
     
     @property
     def name(self) -> int:

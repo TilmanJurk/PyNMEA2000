@@ -63,8 +63,8 @@ class N2kDD206:
     throttle_position_sensor: int = 0
     engine_emergency_stop_mode: int = 0
 
-    def __init__(self, status):
-        self.status = status
+    def __init__(self, value: int = 0):
+        self.status = value
 
     @property
     def status(self):
@@ -123,8 +123,8 @@ class N2kDD223:
     manufacturer7: int = 0
     manufacturer8: int = 0
 
-    def __init__(self, status):
-        self.status = status
+    def __init__(self, value: int = 0):
+        self.status = value
 
     @property
     def status(self):
@@ -218,6 +218,9 @@ class N2kDD471(IntEnum):
     reserved: int = 0
     data_not_available: int = 0
 
+    def __init__(self, value: int = 0):
+        self.events = value
+
     @property
     def events(self):
         return self.motor_over_temperature_cutout << 0 | \
@@ -261,6 +264,9 @@ class N2kDD475:
     another_device_controlling_thruster: int = 0
     boat_speed_to_fast: int = 0
 
+    def __init__(self, value: int = 0):
+        self.events = 0
+
     @property
     def events(self):
         return self.another_device_controlling_thruster << 0 | self.boat_speed_to_fast << 1
@@ -276,6 +282,9 @@ class N2kDD477:
     controller_under_voltage_cutout: int = 0
     controller_over_current_cutout: int = 0
     controller_over_temperature_cutout: int = 0
+
+    def __init__(self, value: int = 0):
+        self.events = value
 
     @property
     def events(self):
@@ -294,7 +303,7 @@ class N2kDD477:
 class N2kDD478:
     another_device_controlling_windlass: int = 0
 
-    def __init__(self, value):
+    def __init__(self, value: int = 0):
         self.events = value
 
     @property
@@ -338,7 +347,7 @@ class N2kDD483:
     retrieval_docking_distance_reached: int = 0
     end_of_rode_reached: int = 0
 
-    def __init__(self, value):
+    def __init__(self, value: int = 0):
         self.event = value
 
     @property
