@@ -8,7 +8,8 @@ from n2k.types import N2kTimeSource, N2kAISRepeat, N2kAISTransceiverInformation,
     N2kHeadingReference, N2kMOBEmitterBatteryStatus, N2kOnOff, N2kSteeringMode, N2kTurnMode, N2kRudderDirectionOrder, \
     ProductInformation, ConfigurationInformation, N2kWindReference, N2kGNSSType, N2kGNSSMethod, N2kMagneticVariation, \
     N2kEngineDiscreteStatus1, N2kEngineDiscreteStatus2, N2kTransmissionGear, N2kTransmissionDiscreteStatus1, \
-    N2kFluidType, N2kDCType, N2kChargeState, N2kChargerMode, N2kBatType, N2kBatEqSupport, N2kBatNomVolt, N2kBatChem
+    N2kFluidType, N2kDCType, N2kChargeState, N2kChargerMode, N2kBatType, N2kBatEqSupport, N2kBatNomVolt, N2kBatChem, \
+    N2kSpeedWaterReferenceType
 from n2k.constants import *
 from n2k.utils import IntRef
 
@@ -1148,7 +1149,45 @@ def parse_n2k_leeway(msg: Message) -> Leeway:
 
 
 # Boat Speed (PGN 128259)
-# TODO
+def set_n2k_boat_speed(sid: int, water_referenced: float, ground_referenced: float,
+                       swrt: N2kSpeedWaterReferenceType) -> Message:
+    """
+    Boat Speed (PGN 128259)
+
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        different messages to indicate that they are measured at same time
+    :param water_referenced: Speed through the water in meters per second, precision 0.01m/s
+    :param ground_referenced: Speed over ground in meters per second, precision 0.01m/s
+    :param swrt: Type of transducer for the water referenced speed, see type
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.BoatSpeed
+    msg.priority = 2
+    msg.add_byte_uint(sid)
+    msg.add_2_byte_udouble(water_referenced, 0.01)
+    msg.add_2_byte_udouble(ground_referenced, 0.01)
+    msg.add_byte_uint(swrt)
+    msg.add_byte_uint(0xff)  # Reserved
+    msg.add_byte_uint(0xff)  # Reserved
+    return msg
+
+
+class BoatSpeed(NamedTuple):
+    sid: int
+    water_referenced: float
+    ground_referenced: float
+    swrt: N2kSpeedWaterReferenceType
+
+
+def parse_n2k_boat_speed(msg: Message) -> BoatSpeed:
+    index = IntRef(0)
+    return BoatSpeed(
+        sid=msg.get_byte_uint(index),
+        water_referenced=msg.get_2_byte_udouble(0.01, index),
+        ground_referenced=msg.get_2_byte_udouble(0.01, index),
+        swrt=N2kSpeedWaterReferenceType(msg.get_byte_uint(index)),
+    )
 
 
 # Water depth (PGN 128267)
