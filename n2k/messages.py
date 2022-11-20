@@ -1191,7 +1191,43 @@ def parse_n2k_boat_speed(msg: Message) -> BoatSpeed:
 
 
 # Water depth (PGN 128267)
-# TODO
+def set_n2k_water_depth(sid: int, depth_below_transducer: float, offset: float, range: float) -> Message:
+    """
+    Water Depth (PGN 128267)
+
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        different messages to indicate that they are measured at same time
+    :param depth_below_transducer: Water depth below transducer in meters, precision 0.01m
+    :param offset: Distance in meters between transducer and water surface (positive) or transducer and keel (negative),
+        precision 0.001m
+    :param range: maximum depth that can be measured
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.WaterDepth,
+    msg.priority = 3
+    msg.add_byte_uint(sid)
+    msg.add_4_byte_udouble(depth_below_transducer, 0.01)
+    msg.add_2_byte_double(offset, 0.001)
+    msg.add_1_byte_udouble(range, 10)
+    return msg
+
+
+class WaterDepth(NamedTuple):
+    sid: int
+    depth_below_transducer: float
+    offset: float
+    range: float
+
+
+def parse_n2k_water_depth(msg: Message) -> WaterDepth:
+    index = IntRef(0)
+    return WaterDepth(
+        sid=msg.get_byte_uint(index),
+        depth_below_transducer=msg.get_4_byte_udouble(0.01, index),
+        offset=msg.get_2_byte_double(0.001, index),
+        range=msg.get_1_byte_udouble(10, index),
+    )
 
 
 # Distance log (PGN 128275)
