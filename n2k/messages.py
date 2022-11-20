@@ -1118,6 +1118,7 @@ def parse_n2k_battery_configuration_status(msg: Message) -> BatteryConfiguration
 def set_n2k_leeway(sid: int, leeway: float) -> Message:
     """
     Leeway (PGN 128000)
+
     :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
         different messages to indicate that they are measured at same time
     :param leeway: Positive angles indicate slippage to starboard, that is, the vessel is tracking to the right of its
