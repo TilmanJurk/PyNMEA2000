@@ -1509,6 +1509,13 @@ def parse_n2k_anchor_windlass_monitoring_status(msg: Message) -> AnchorWindlassM
 
 # Lat/lon rapid (PGN 129025)
 def set_n2k_lat_long_rapid(latitude: float, longitude: float) -> Message:
+    """
+    Position rapid update (PGN 129025)
+
+    :param latitude: Latitude in degrees, precision approx 1.1cm (1e-7 deg)
+    :param longitude: Longitude in degrees, precision approx 1.1cm at equator (1e-7 deg)
+    :return: NMEA2000 Message, ready to be sent
+    """
     msg = Message()
     msg.pgn = PGN.LatLonRapid
     msg.priority = 2
