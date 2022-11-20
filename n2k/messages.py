@@ -9,7 +9,8 @@ from n2k.types import N2kTimeSource, N2kAISRepeat, N2kAISTransceiverInformation,
     ProductInformation, ConfigurationInformation, N2kWindReference, N2kGNSSType, N2kGNSSMethod, N2kMagneticVariation, \
     N2kEngineDiscreteStatus1, N2kEngineDiscreteStatus2, N2kTransmissionGear, N2kTransmissionDiscreteStatus1, \
     N2kFluidType, N2kDCType, N2kChargeState, N2kChargerMode, N2kBatType, N2kBatEqSupport, N2kBatNomVolt, N2kBatChem, \
-    N2kSpeedWaterReferenceType
+    N2kSpeedWaterReferenceType, N2kWindlassDirectionControl, N2kSpeedType, N2kGenericStatusPair, \
+    N2kWindlassControlEvents
 from n2k.constants import *
 from n2k.utils import IntRef
 
@@ -1271,7 +1272,109 @@ def parse_n2k_distance_log(msg: Message) -> DistanceLog:
 
 
 # Anchor Windlass Control Status (PGN 128776)
-# TODO
+def set_n2k_anchor_windlass_control_status(sid: int,
+                                           windlass_identifier: int,
+                                           windlass_direction_control: N2kWindlassDirectionControl,
+                                           speed_control: int,
+                                           speed_control_type: N2kSpeedType,
+                                           anchor_docking_control: N2kGenericStatusPair,
+                                           power_enable: N2kGenericStatusPair,
+                                           mechanical_lock: N2kGenericStatusPair,
+                                           deck_and_anchor_wash: N2kGenericStatusPair,
+                                           anchor_light: N2kGenericStatusPair,
+                                           command_timeout: float,
+                                           windlass_control_events: N2kWindlassControlEvents
+                                           ) -> Message:
+    """
+    Anchor Windlass Control Status (PGN 128776)
+
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        different messages to indicate that they are measured at same time
+    :param windlass_identifier: Windlass Identifier
+    :param windlass_direction_control: Windlass Direction, see type
+    :param speed_control: Single Speed: 0=off, 1-100=on\n
+        Dual Speed: 0=0ff, 1-49=slow, 50-100=fast\n
+        Proportional speed: 0=off, 1-100=speed
+    :param speed_control_type: Speed control type, Single, Dual or Proportional
+    :param anchor_docking_control: Anchor Docking Control, Yes/No
+    :param power_enable: Power Enable, Yes/No
+    :param mechanical_lock: Mechanical Lock, Yes/No
+    :param deck_and_anchor_wash: Deck and Anchor Wash, Yes/No
+    :param anchor_light: Anchor Light, Yes/No
+    :param command_timeout: Command Timeout. Range 0.0 to 1.275 seconds, precision 0.005s
+    :param windlass_control_events: Windlass Control Events, see type
+    :return:
+    """
+    msg = Message()
+    msg.pgn = PGN.AnchorWindlassControlStatus
+    msg.priority = 2
+    msg.add_byte_uint(sid)
+    msg.add_byte_uint(windlass_identifier)
+    msg.add_byte_uint(
+        0x03 << 6 |
+        (speed_control_type & 0x03) << 4 |
+        (anchor_docking_control & 0x03) << 2 |
+        windlass_direction_control & 0x03
+    )
+    msg.add_byte_uint(speed_control)
+    msg.add_byte_uint(
+        (anchor_light & 0x03) << 6 |
+        (deck_and_anchor_wash & 0x03) << 4 |
+        (mechanical_lock & 0x03) << 2 |
+        power_enable & 0x03
+    )
+    msg.add_1_byte_udouble(command_timeout, 0.005)
+    msg.add_byte_uint(windlass_control_events.events)
+    return msg
+
+
+class AnchorWindlassControlStatus(NamedTuple):
+    sid: int
+    windlass_identifier: int
+    windlass_direction_control: N2kWindlassDirectionControl
+    speed_control: int
+    speed_control_type: N2kSpeedType
+    anchor_docking_control: N2kGenericStatusPair
+    power_enable: N2kGenericStatusPair
+    mechanical_lock: N2kGenericStatusPair
+    deck_and_anchor_wash: N2kGenericStatusPair
+    anchor_light: N2kGenericStatusPair
+    command_timeout: float
+    windlass_control_events: N2kWindlassControlEvents
+
+
+def parse_n2k_anchor_windlass_control_status(msg: Message) -> AnchorWindlassControlStatus:
+    index = IntRef(0)
+
+    sid = msg.get_byte_uint(index)
+    windlass_identifier = msg.get_byte_uint(index)
+    vb = msg.get_byte_uint(index)
+    windlass_direction_control = N2kWindlassDirectionControl(vb & 0x03)
+    anchor_docking_control = N2kGenericStatusPair((vb >> 2) & 0x03)
+    speed_control_type = N2kSpeedType((vb >> 4) & 0x03)
+    speed_control = msg.get_byte_uint(index)
+    vb = msg.get_byte_uint(index)
+    power_enable = N2kGenericStatusPair(vb & 0x03)
+    mechanical_lock = N2kGenericStatusPair((vb >> 2) & 0x03)
+    deck_and_anchor_wash = N2kGenericStatusPair((vb >> 4) & 0x03)
+    anchor_light = N2kGenericStatusPair((vb >> 6) & 0x03)
+    command_timeout = msg.get_1_byte_udouble(0.005, index)
+    windlass_control_events = N2kWindlassControlEvents(msg.get_byte_uint(index))
+
+    return AnchorWindlassControlStatus(
+        sid=sid,
+        windlass_identifier=windlass_identifier,
+        windlass_direction_control=windlass_direction_control,
+        speed_control=speed_control,
+        speed_control_type=speed_control_type,
+        anchor_docking_control=anchor_docking_control,
+        power_enable=power_enable,
+        mechanical_lock=mechanical_lock,
+        deck_and_anchor_wash=deck_and_anchor_wash,
+        anchor_light=anchor_light,
+        command_timeout=command_timeout,
+        windlass_control_events=windlass_control_events,
+    )
 
 
 # Anchor Windlass Operating Status (PGN 128777)

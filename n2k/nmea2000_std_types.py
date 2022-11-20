@@ -294,6 +294,9 @@ class N2kDD477:
 class N2kDD478:
     another_device_controlling_windlass: int = 0
 
+    def __init__(self, value):
+        self.events = value
+
     @property
     def events(self):
         return self.another_device_controlling_windlass
@@ -301,6 +304,7 @@ class N2kDD478:
     @events.setter
     def events(self, value):
         self.another_device_controlling_windlass = (value >> 0) & 0b1
+
 
 # DD480 - Windlass Motion States
 class N2kDD480(IntEnum):
