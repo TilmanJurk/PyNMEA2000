@@ -1540,6 +1540,16 @@ def parse_n2k_lat_long_rapid(msg: Message) -> LatLonRapid:
 
 # COG SOG rapid (PGN 129026)
 def set_n2k_cog_sog_rapid(sid: int, heading_reference: N2kHeadingReference, cog: float, sog: float) -> Message:
+    """
+    Course and Speed over Ground, rapid update (PGN 129026)
+
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        different messages to indicate that they are measured at same time
+    :param heading_reference: Course over Ground reference, see type
+    :param cog: Course over Ground in radians, precision 0.0001rad
+    :param sog: Speed over Ground in meters per second, precision 0.01m/s
+    :return: NMEA2000 Message, ready to be sent
+    """
     msg = Message()
     msg.pgn = PGN.CogSogRapid
     msg.priority = 2
