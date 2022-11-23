@@ -645,24 +645,37 @@ class EngineParametersDynamic(NamedTuple):
 def parse_n2k_engine_parameters_dynamic(msg: Message) -> EngineParametersDynamic:
     index = IntRef(0)
 
-    epd = EngineParametersDynamic(
-        engine_instance=msg.get_byte_uint(index),
-        engine_oil_press=msg.get_2_byte_udouble(100, index),
-        engine_oil_temp=msg.get_2_byte_udouble(0.1, index),
-        engine_coolant_temp=msg.get_2_byte_udouble(0.01, index),
-        alternator_voltage=msg.get_2_byte_double(0.01, index),
-        fuel_rate=msg.get_2_byte_double(0.1, index),
-        engine_hours=msg.get_4_byte_udouble(1, index),
-        engine_coolant_press=msg.get_2_byte_udouble(100, index),
-        engine_fuel_press=msg.get_2_byte_udouble(1000, index),
-    )
-    msg.get_byte_uint(index)
-    epd.status1 = N2kEngineDiscreteStatus1(msg.get_2_byte_uint(index))
-    epd.status2 = N2kEngineDiscreteStatus2(msg.get_2_byte_uint(index))
-    epd.engine_load = msg.get_byte_uint(index)
-    epd.engine_torque = msg.get_byte_uint(index)
+    engine_instance = msg.get_byte_uint(index)
+    engine_oil_press = msg.get_2_byte_udouble(100, index)
+    engine_oil_temp = msg.get_2_byte_udouble(0.1, index)
+    engine_coolant_temp = msg.get_2_byte_udouble(0.01, index)
+    alternator_voltage = msg.get_2_byte_double(0.01, index)
+    fuel_rate = msg.get_2_byte_double(0.1, index)
+    engine_hours = msg.get_4_byte_udouble(1, index)
+    engine_coolant_press = msg.get_2_byte_udouble(100, index)
+    engine_fuel_press = msg.get_2_byte_udouble(1000, index)
 
-    return epd
+    msg.get_byte_uint(index)
+    status1 = N2kEngineDiscreteStatus1(msg.get_2_byte_uint(index))
+    status2 = N2kEngineDiscreteStatus2(msg.get_2_byte_uint(index))
+    engine_load = msg.get_byte_uint(index)
+    engine_torque = msg.get_byte_uint(index)
+
+    return EngineParametersDynamic(
+        engine_instance=engine_instance,
+        engine_oil_press=engine_oil_press,
+        engine_oil_temp=engine_oil_temp,
+        engine_coolant_temp=engine_coolant_temp,
+        alternator_voltage=alternator_voltage,
+        fuel_rate=fuel_rate,
+        engine_hours=engine_hours,
+        engine_coolant_press=engine_coolant_press,
+        engine_fuel_press=engine_fuel_press,
+        status1=status1,
+        status2=status2,
+        engine_load=engine_load,
+        engine_torque=engine_torque,
+    )
 
 
 # Transmission parameters, dynamic (PGN 127493)
