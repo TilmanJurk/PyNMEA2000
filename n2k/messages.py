@@ -2280,6 +2280,54 @@ def parse_n2k_ais_aids_to_navigation_report(msg: Message) -> AISAtoNReportData:
         a_to_n_name=a_to_n_name,
     )
 
+
+# Cross Track Error (PGN 129283)
+def set_n2k_cross_track_error(sid: int, xte_mode: N2kXTEMode, navigation_terminated: bool, xte: float) -> Message:
+    """
+    Cross Track Error (PGN 129283)
+
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        different messages to indicate that they are measured at same time
+    :param xte_mode: CrossTrackError Mode, see type
+    :param navigation_terminated: Navigation has been terminated
+    :param xte: CrossTrackError in meters
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.CrossTrackError
+    msg.priority = 3
+    msg.add_byte_uint(sid)
+    msg.add_byte_uint((navigation_terminated & 0x01) << 6 | (xte_mode & 0x0f))
+    msg.add_4_byte_double(xte, 0.01)
+    msg.add_byte_uint(0xff)  # Reserved
+    msg.add_byte_uint(0xff)  # Reserved
+    return msg
+
+
+class CrossTrackError(NamedTuple):
+    sid: int
+    xte_mode: N2kXTEMode
+    navigation_terminated: bool
+    xte: float
+
+
+def parse_n2k_cross_track_error(msg: Message) -> CrossTrackError:
+    index = IntRef(0)
+
+    sid = msg.get_byte_uint(index)
+    vb = msg.get_byte_uint(index)
+    xte_mode = N2kXTEMode(vb & 0x0f)
+    navigation_terminated = bool((vb >> 6) & 0x01)
+    xte = msg.get_4_byte_double(0.01, index)
+
+    return CrossTrackError(
+        sid=sid,
+        xte_mode=xte_mode,
+        navigation_terminated=navigation_terminated,
+        xte=xte,
+    )
+
+
 # AIS static data class A (PGN 129794)
 # TODO
 
