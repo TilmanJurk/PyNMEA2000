@@ -2428,6 +2428,104 @@ def parse_n2k_navigation_info(msg: Message) -> NavigationInfo:
     )
 
 
+class Waypoint(NamedTuple):
+    id: int
+    name: str
+    latitude: float
+    longitude: float
+
+
+# Route Waypoint Information (PGN 129285)
+def set_n2k_route_waypoint_information(start: int, database: int, route: int, nav_direction: N2kNavigationDirection,
+                                       route_name: str, supplementary_data: N2kGenericStatusPair,
+                                       waypoints: List[Waypoint]) -> Message:
+    """
+    Route Waypoint Information (PGN 129285)
+
+    :param start: The ID of the first waypoint
+    :param database: Database ID
+    :param route: Route ID
+    :param nav_direction: Navigation Direction in Route, see type
+    :param route_name: The name of the current route
+    :param supplementary_data: Supplementary Route/WP data available
+    :param waypoints: List of waypoints to be sent with the route.
+        Each consisting of an ID, Name, Latitude and Longitude.
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.WaypointList
+    msg.priority = 6
+
+    available_data_len = msg.max_data_len - 10 - len(route_name) - 2  # Length of space not taken up by list metadata
+    base_waypoint_len = 2 + 4 + 4 + 2  # ID, Latitude, Longitude, 2 bytes per varchar string
+    i = 0
+    for i, waypoint in enumerate(waypoints):
+        available_data_len -= base_waypoint_len + len(waypoint.name)
+        if available_data_len < 0:
+            i -= 1
+            break
+    waypoints = waypoints[:i+1]
+
+    msg.add_2_byte_uint(start)
+    msg.add_2_byte_uint(len(waypoints))
+    msg.add_2_byte_uint(database)
+    msg.add_2_byte_uint(route)
+    msg.add_byte_uint(0xe0 | (supplementary_data & 0x03) << 3 | (nav_direction & 0x07))
+    msg.add_var_str(route_name)
+    msg.add_byte_uint(0xff)  # Reserved
+    for waypoint in waypoints:
+        msg.add_2_byte_uint(waypoint.id)
+        msg.add_var_str(waypoint.name)
+        msg.add_4_byte_double(waypoint.latitude, 1e-7)
+        msg.add_4_byte_double(waypoint.longitude, 1e-7)
+
+    return msg
+
+
+class RouteWaypointInformation(NamedTuple):
+    start: int
+    database: int
+    route: int
+    nav_direction: N2kNavigationDirection
+    route_name: str
+    supplementary_data: N2kGenericStatusPair
+    waypoints: List[Waypoint]
+
+
+def parse_n2k_route_waypoint_information(msg: Message) -> RouteWaypointInformation:
+    index = IntRef(0)
+    start = msg.get_2_byte_uint(index)
+    waypoints_len = msg.get_2_byte_uint(index)
+    database = msg.get_2_byte_uint(index)
+    route = msg.get_2_byte_uint(index)
+    vb = msg.get_byte_uint(index)
+    supplementary_data = N2kGenericStatusPair((vb >> 3) & 0x03)
+    nav_direction = N2kNavigationDirection(vb & 0x07)
+    route_name = msg.get_var_str(index)
+    msg.get_byte_uint(index)  # Reserved
+    waypoints = []
+    while index.value < msg.data_len:
+        waypoints.append(
+            Waypoint(
+                id=msg.get_2_byte_uint(index),
+                name=msg.get_var_str(index),
+                latitude=msg.get_4_byte_double(1e-7, index),
+                longitude=msg.get_4_byte_double(1e-7, index),
+            )
+        )
+    assert len(waypoints) == waypoints_len
+
+    return RouteWaypointInformation(
+        start=start,
+        database=database,
+        route=route,
+        supplementary_data=supplementary_data,
+        nav_direction=nav_direction,
+        route_name=route_name,
+        waypoints=waypoints,
+    )
+
+
 # AIS static data class A (PGN 129794)
 # TODO
 
