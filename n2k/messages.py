@@ -2458,13 +2458,10 @@ def set_n2k_route_waypoint_information(start: int, database: int, route: int, na
 
     available_data_len = msg.max_data_len - 10 - len(route_name) - 2  # Length of space not taken up by list metadata
     base_waypoint_len = 2 + 4 + 4 + 2  # ID, Latitude, Longitude, 2 bytes per varchar string
-    i = 0
     for i, waypoint in enumerate(waypoints):
         available_data_len -= base_waypoint_len + len(waypoint.name)
         if available_data_len < 0:
-            i -= 1
-            break
-    waypoints = waypoints[:i+1]
+            raise ValueError("Buffer size exceeded, only the first {:d} waypoints fit in the data buffer".format(i))
 
     msg.add_2_byte_uint(start)
     msg.add_2_byte_uint(len(waypoints))
