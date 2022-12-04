@@ -2328,6 +2328,106 @@ def parse_n2k_cross_track_error(msg: Message) -> CrossTrackError:
     )
 
 
+# Navigation Info (PGN 129284)
+def set_n2k_navigation_info(sid: int, distance_to_waypoint: float, bearing_reference: N2kHeadingReference,
+                            perpendicular_crossed: bool, arrival_circle_entered: bool,
+                            calculation_type: N2kDistanceCalculationType, eta_time: float, eta_date: int,
+                            bearing_origin_to_destination_waypoint: float,
+                            bearing_position_to_destination_waypoint: float, origin_waypoint_number: int,
+                            destination_waypoint_number: int, destination_latitude: float, destination_longitude: float,
+                            waypoint_closing_veloctiy: float) -> Message:
+    """
+    # Navigation Info (PGN 129284)
+
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        different messages to indicate that they are measured at same time
+    :param distance_to_waypoint: Distance to Destination Waypoint in meters (precision 1cm)
+    :param bearing_reference: Course/Bearing Reference, see type
+    :param perpendicular_crossed: Perpendicular Crossed
+    :param arrival_circle_entered: Arrival Circle Entered
+    :param calculation_type: Calculation Type, see type
+    :param eta_time: Estimated Time at Arrival in seconds since midnight
+    :param eta_date: Days since 1.1.1970 UTC
+    :param bearing_origin_to_destination_waypoint: Bearing, From Origin to Destination Waypoint
+    :param bearing_position_to_destination_waypoint: Bearing, From current Position to Destination Waypoint
+    :param origin_waypoint_number: Origin Waypoint Number
+    :param destination_waypoint_number: Destination Waypoint Number
+    :param destination_latitude: Destination Waypoint Latitude
+    :param destination_longitude: Destination Waypoint Longitude
+    :param waypoint_closing_veloctiy: Waypoint Closing Velocity
+    :return: NMEA2000 Messasge, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.NavigationInfo
+    msg.priority = 3
+    msg.add_byte_uint(sid)
+    msg.add_4_byte_udouble(distance_to_waypoint, 0.01)
+    msg.add_byte_uint(
+        (calculation_type & 0x01) << 6 |
+        (arrival_circle_entered & 0x01) << 4 |
+        (perpendicular_crossed & 0x01) << 2 |
+        bearing_reference & 0x03
+    )
+    msg.add_4_byte_udouble(eta_time, 1e-4)
+    msg.add_2_byte_uint(eta_date)
+    msg.add_2_byte_udouble(bearing_origin_to_destination_waypoint, 1e-4)
+    msg.add_2_byte_udouble(bearing_position_to_destination_waypoint, 1e-4)
+    msg.add_4_byte_uint(origin_waypoint_number)
+    msg.add_4_byte_uint(destination_waypoint_number)
+    msg.add_4_byte_double(destination_latitude, 1e-7)
+    msg.add_4_byte_double(destination_longitude, 1e-7)
+    msg.add_2_byte_double(waypoint_closing_veloctiy, 0.01)
+
+    return msg
+
+
+class NavigationInfo(NamedTuple):
+    sid: int
+    distance_to_waypoint: float
+    bearing_reference: N2kHeadingReference
+    perpendicular_crossed: bool
+    arrival_circle_entered: bool
+    calculation_type: N2kDistanceCalculationType
+    eta_time: float
+    eta_date: int
+    bearing_origin_to_destination_waypoint: float
+    bearing_position_to_destination_waypoint: float
+    origin_waypoint_number: int
+    destination_waypoint_number: int
+    destination_latitude: float
+    destination_longitude: float
+    waypoint_closing_veloctiy: float
+
+
+def parse_n2k_navigation_info(msg: Message) -> NavigationInfo:
+    index = IntRef(0)
+    sid = msg.get_byte_uint(index)
+    distance_to_waypoint = msg.get_4_byte_udouble(0.01, index)
+    vb = msg.get_byte_uint(index)
+    bearing_reference = N2kHeadingReference(vb & 0x03)
+    perpendicular_crossed = bool((vb >> 2) & 0x01)
+    arrival_circle_entered = bool((vb >> 4) & 0x01)
+    calculation_type = N2kDistanceCalculationType((vb >> 6) & 0x01)
+
+    return NavigationInfo(
+        sid=sid,
+        distance_to_waypoint=distance_to_waypoint,
+        bearing_reference=bearing_reference,
+        perpendicular_crossed=perpendicular_crossed,
+        arrival_circle_entered=arrival_circle_entered,
+        calculation_type=calculation_type,
+        eta_time=msg.get_4_byte_udouble(1e-4, index),
+        eta_date=msg.get_2_byte_uint(index),
+        bearing_origin_to_destination_waypoint=msg.get_2_byte_udouble(1e-4, index),
+        bearing_position_to_destination_waypoint=msg.get_2_byte_udouble(1e-4, index),
+        origin_waypoint_number=msg.get_4_byte_uint(index),
+        destination_waypoint_number=msg.get_4_byte_uint(index),
+        destination_latitude=msg.get_4_byte_double(1e-7, index),
+        destination_longitude=msg.get_4_byte_double(1e-7, index),
+        waypoint_closing_veloctiy=msg.get_2_byte_double(0.01, index),
+    )
+
+
 # AIS static data class A (PGN 129794)
 # TODO
 
