@@ -1979,154 +1979,6 @@ def parse_n2k_ais_class_b_position(msg: Message) -> AISClassBPositionReport:
 
 
 # AIS Aids to Navigation (AtoN) Report (PGN 129041)
-# TODO
-
-
-# Cross Track Error (PGN 129283)
-# TODO
-
-
-# Navigation info (PGN 129284)
-# TODO !!!
-
-
-# Route/WP information (PGN 129285)
-# TODO
-
-
-# GNSS DOP data (PGN 129539)
-def set_n2k_gnss_dop(sid: int, desired_mode: N2kGNSSDOPmode, actual_mode: N2kGNSSDOPmode, hdop: float, vdop: float,
-                     tdop: float) -> Message:
-    """
-    GNSS DOP Data (PGN 129539)
-
-    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
-        different messages to indicate that they are measured at same time
-    :param desired_mode: Desired DOP Mode
-    :param actual_mode: Actual DOP Mode
-    :param hdop: Horizontal Dilution of Precision in meters.
-    :param vdop: Vertical Dilution of Precision in meters.
-    :param tdop: Time Dilution of Precision
-    :return: NMEA2000 message, ready to be sent
-    """
-    msg = Message()
-    msg.pgn = PGN.GNSSDOPData
-    msg.priority = 6
-    msg.add_byte_uint(sid)
-    msg.add_byte_uint((desired_mode & 0x07) << 5 | ((actual_mode & 0x07) << 2))
-    msg.add_2_byte_double(hdop, 0.01)
-    msg.add_2_byte_double(vdop, 0.01)
-    msg.add_2_byte_double(tdop, 0.01)
-    return msg
-
-
-class GNSSDOPData(NamedTuple):
-    sid: int
-    desired_mode: N2kGNSSDOPmode
-    actual_mode: N2kGNSSDOPmode
-    hdop: float
-    vdop: float
-    tdop: float
-
-
-def parse_n2k_gnss_dop(msg: Message) -> GNSSDOPData:
-    index = IntRef(0)
-
-    sid = msg.get_byte_uint(index)
-    vb = msg.get_byte_uint(index)
-
-    return GNSSDOPData(
-        sid=sid,
-        desired_mode=N2kGNSSDOPmode((vb >> 5) & 0x07),
-        actual_mode=N2kGNSSDOPmode((vb >> 2) & 0x07),
-        hdop=msg.get_2_byte_double(0.01, index),
-        vdop=msg.get_2_byte_double(0.01, index),
-        tdop=msg.get_2_byte_double(0.01, index),
-    )
-
-
-MAX_SATELLITE_INFO_COUNT = 18  # Maximum amount of satellites that fit into fast packet. TODO: extend using tp message
-
-
-class SatelliteInfo(NamedTuple):
-    # TODO: figure out a way to type NamedTuples properly.
-    prn: int
-    elevation: float
-    azimuth: float
-    snr: float
-    range_residuals: float
-    usage_status: N2kPRNUsageStatus
-
-
-# GNSS Satellites in View (PGN 129540)
-def set_n2k_gnss_satellites_in_view(sid: int, mode: N2kRangeResidualMode, satellites: List[SatelliteInfo]) -> Message:
-    """
-    GNSS Satellites in View (PGN 129540)
-
-    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
-        different messages to indicate that they are measured at same time
-    :param mode: Range residual mode
-    :param satellites: List of the info of the satellites used
-    :return: NMEA2000 Message, ready to be sent
-    """
-    msg = Message()
-    msg.pgn = PGN.GNSSSatellitesInView
-    msg.priority = 6
-    msg.add_byte_uint(sid)
-    msg.add_byte_uint(mode | 0xfc)  # 2 bit mode, 6 bit reserved
-
-    if len(satellites) > MAX_SATELLITE_INFO_COUNT:
-        # TODO: Log warning
-        satellites = satellites[:MAX_SATELLITE_INFO_COUNT]
-    msg.add_byte_uint(len(satellites))
-
-    for satellite in satellites:
-        msg.add_byte_uint(satellite.prn)
-        msg.add_2_byte_double(satellite.elevation, 1e-4)
-        msg.add_2_byte_udouble(satellite.azimuth, 1e-4)
-        msg.add_2_byte_double(satellite.snr, 1e-2)
-        msg.add_4_byte_double(satellite.range_residuals, 1e-4)
-        msg.add_byte_uint(satellite.usage_status | 0xf0)
-
-    return msg
-
-
-class GNSSSatellitesInView(NamedTuple):
-    sid: int
-    mode: N2kRangeResidualMode
-    satellites: List[SatelliteInfo]
-
-
-def parse_n2k_gnss_satellites_in_view(msg: Message) -> GNSSSatellitesInView:
-    index = IntRef(0)
-
-    sid = msg.get_byte_uint(index)
-    mode = N2kRangeResidualMode(msg.get_byte_uint(index) & 0x03)
-    number_of_satellites = msg.get_byte_uint(index)
-    satellites = []
-
-    if number_of_satellites > MAX_SATELLITE_INFO_COUNT:
-        # TODO: Log warning
-        pass
-    else:
-        for i in range(number_of_satellites):
-            satellites.append(SatelliteInfo(
-                prn=msg.get_byte_uint(index),
-                elevation=msg.get_2_byte_double(1e-4, index),
-                azimuth=msg.get_2_byte_udouble(1e-4, index),
-                snr=msg.get_2_byte_double(1e-2, index),
-                range_residuals=msg.get_4_byte_double(1e-5, index),
-                usage_status=N2kPRNUsageStatus(msg.get_byte_uint(index) & 0x0f),
-            ))
-
-    return GNSSSatellitesInView(
-        sid=sid,
-        mode=mode,
-        satellites=satellites,
-    )
-
-
-# AIS Aids to Navigation (AtoN) Report (PGN 129041)
 def set_n2k_ais_aids_to_navigation_report(
         message_id: int = N2K_UINT8_NA,
         repeat: N2kAISRepeat = N2kAISRepeat.Initial,
@@ -2525,6 +2377,138 @@ def parse_n2k_route_waypoint_information(msg: Message) -> RouteWaypointInformati
         nav_direction=nav_direction,
         route_name=route_name,
         waypoints=waypoints,
+    )
+
+
+# GNSS DOP data (PGN 129539)
+def set_n2k_gnss_dop(sid: int, desired_mode: N2kGNSSDOPmode, actual_mode: N2kGNSSDOPmode, hdop: float, vdop: float,
+                     tdop: float) -> Message:
+    """
+    GNSS DOP Data (PGN 129539)
+
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        different messages to indicate that they are measured at same time
+    :param desired_mode: Desired DOP Mode
+    :param actual_mode: Actual DOP Mode
+    :param hdop: Horizontal Dilution of Precision in meters.
+    :param vdop: Vertical Dilution of Precision in meters.
+    :param tdop: Time Dilution of Precision
+    :return: NMEA2000 message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.GNSSDOPData
+    msg.priority = 6
+    msg.add_byte_uint(sid)
+    msg.add_byte_uint((desired_mode & 0x07) << 5 | ((actual_mode & 0x07) << 2))
+    msg.add_2_byte_double(hdop, 0.01)
+    msg.add_2_byte_double(vdop, 0.01)
+    msg.add_2_byte_double(tdop, 0.01)
+    return msg
+
+
+class GNSSDOPData(NamedTuple):
+    sid: int
+    desired_mode: N2kGNSSDOPmode
+    actual_mode: N2kGNSSDOPmode
+    hdop: float
+    vdop: float
+    tdop: float
+
+
+def parse_n2k_gnss_dop(msg: Message) -> GNSSDOPData:
+    index = IntRef(0)
+
+    sid = msg.get_byte_uint(index)
+    vb = msg.get_byte_uint(index)
+
+    return GNSSDOPData(
+        sid=sid,
+        desired_mode=N2kGNSSDOPmode((vb >> 5) & 0x07),
+        actual_mode=N2kGNSSDOPmode((vb >> 2) & 0x07),
+        hdop=msg.get_2_byte_double(0.01, index),
+        vdop=msg.get_2_byte_double(0.01, index),
+        tdop=msg.get_2_byte_double(0.01, index),
+    )
+
+
+MAX_SATELLITE_INFO_COUNT = 18  # Maximum amount of satellites that fit into fast packet. TODO: extend using tp message
+
+
+class SatelliteInfo(NamedTuple):
+    # TODO: figure out a way to type NamedTuples properly.
+    prn: int
+    elevation: float
+    azimuth: float
+    snr: float
+    range_residuals: float
+    usage_status: N2kPRNUsageStatus
+
+
+# GNSS Satellites in View (PGN 129540)
+def set_n2k_gnss_satellites_in_view(sid: int, mode: N2kRangeResidualMode, satellites: List[SatelliteInfo]) -> Message:
+    """
+    GNSS Satellites in View (PGN 129540)
+
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        different messages to indicate that they are measured at same time
+    :param mode: Range residual mode
+    :param satellites: List of the info of the satellites used
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.GNSSSatellitesInView
+    msg.priority = 6
+    msg.add_byte_uint(sid)
+    msg.add_byte_uint(mode | 0xfc)  # 2 bit mode, 6 bit reserved
+
+    if len(satellites) > MAX_SATELLITE_INFO_COUNT:
+        # TODO: Log warning
+        satellites = satellites[:MAX_SATELLITE_INFO_COUNT]
+    msg.add_byte_uint(len(satellites))
+
+    for satellite in satellites:
+        msg.add_byte_uint(satellite.prn)
+        msg.add_2_byte_double(satellite.elevation, 1e-4)
+        msg.add_2_byte_udouble(satellite.azimuth, 1e-4)
+        msg.add_2_byte_double(satellite.snr, 1e-2)
+        msg.add_4_byte_double(satellite.range_residuals, 1e-4)
+        msg.add_byte_uint(satellite.usage_status | 0xf0)
+
+    return msg
+
+
+class GNSSSatellitesInView(NamedTuple):
+    sid: int
+    mode: N2kRangeResidualMode
+    satellites: List[SatelliteInfo]
+
+
+def parse_n2k_gnss_satellites_in_view(msg: Message) -> GNSSSatellitesInView:
+    index = IntRef(0)
+
+    sid = msg.get_byte_uint(index)
+    mode = N2kRangeResidualMode(msg.get_byte_uint(index) & 0x03)
+    number_of_satellites = msg.get_byte_uint(index)
+    satellites = []
+
+    if number_of_satellites > MAX_SATELLITE_INFO_COUNT:
+        # TODO: Log warning
+        pass
+    else:
+        for i in range(number_of_satellites):
+            satellites.append(SatelliteInfo(
+                prn=msg.get_byte_uint(index),
+                elevation=msg.get_2_byte_double(1e-4, index),
+                azimuth=msg.get_2_byte_udouble(1e-4, index),
+                snr=msg.get_2_byte_double(1e-2, index),
+                range_residuals=msg.get_4_byte_double(1e-5, index),
+                usage_status=N2kPRNUsageStatus(msg.get_byte_uint(index) & 0x0f),
+            ))
+
+    return GNSSSatellitesInView(
+        sid=sid,
+        mode=mode,
+        satellites=satellites,
     )
 
 
