@@ -1743,7 +1743,8 @@ def parse_n2k_date_time_local_offset(msg: Message) -> DateTimeLocalOffset:
 
 # AIS position reports for Class A (PGN 129038)
 def set_n2k_ais_class_a_position(message_id: int, repeat: N2kAISRepeat, user_id: int, latitude: float, longitude: float,
-                                 accuracy: bool, raim: bool, seconds: int, cog: float, sog: float, heading: float,
+                                 accuracy: bool, raim: bool, seconds: int, cog: float, sog: float,
+                                 ais_transceiver_information: N2kAISTransceiverInformation, heading: float,
                                  rot: float, nav_status: N2kAISNavStatus) -> Message:
     """
     AIS Position Reports for Class A (PGN 129038)
@@ -1762,6 +1763,7 @@ def set_n2k_ais_class_a_position(message_id: int, repeat: N2kAISRepeat, user_id:
         63: positioning system is inoperative
     :param cog: Course over Ground in radians, precision 0.0001rad
     :param sog: Speed over Ground in meters per second, precision 0.01m/s
+    :param ais_transceiver_information: AIS Transceiver Information, see type
     :param heading: Compass heading
     :param rot: Rate of Turn
     :param nav_status: Navigational status
@@ -1779,7 +1781,7 @@ def set_n2k_ais_class_a_position(message_id: int, repeat: N2kAISRepeat, user_id:
     msg.add_2_byte_udouble(sog, 0.01)
     msg.add_byte_uint(0xff)  # Communication State (19 bits)
     msg.add_byte_uint(0xff)
-    msg.add_byte_uint(0xff)  # AIS transceiver information (5 bits)
+    msg.add_byte_uint(((0x1f & ais_transceiver_information) << 3) | 0x07)
     msg.add_2_byte_udouble(heading, 1e-4)
     msg.add_2_byte_double(rot, 3.125e-5)  # 1e-3/32.0
     msg.add_byte_uint(0xf0 | (nav_status & 0x0f))
@@ -1798,6 +1800,7 @@ class AISClassAPositionReport(NamedTuple):
     seconds: int
     cog: float
     sog: float
+    ais_transceiver_information: N2kAISTransceiverInformation
     heading: float
     rot: float
     nav_status: N2kAISNavStatus
@@ -1820,7 +1823,8 @@ def parse_n2k_ais_class_a_position(msg: Message) -> AISClassAPositionReport:
     sog = msg.get_2_byte_udouble(0.01, index)
     msg.get_byte_uint(index)  # Communication State (19 bits)
     msg.get_byte_uint(index)
-    msg.get_byte_uint(index)  # AIS tranceiver information (5 bits)
+    vb = msg.get_byte_uint(index)  # AIS transceiver information (5 bits)
+    ais_transceiver_information = N2kAISTransceiverInformation((vb >> 3) & 0x1f)
     heading = msg.get_2_byte_udouble(1e-4, index)
     rot = msg.get_2_byte_double(3.125e-5, index)
     vb = msg.get_byte_uint(index)
@@ -1837,6 +1841,7 @@ def parse_n2k_ais_class_a_position(msg: Message) -> AISClassAPositionReport:
         seconds=seconds,
         cog=cog,
         sog=sog,
+        ais_transceiver_information=ais_transceiver_information,
         heading=heading,
         rot=rot,
         nav_status=nav_status,
