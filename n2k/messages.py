@@ -2645,8 +2645,49 @@ def parse_n2k_ais_class_a_static_data(msg: Message) -> AISClassAStaticData:
     )
 
 
-# AIS static data class B part A (PGN 129809)
-# TODO
+# AIS CLass B Static Data part A (PGN 129809)
+def set_n2k_ais_class_b_static_data_part_a(message_id: int, repeat: N2kAISRepeat, user_id: int, name: str) -> Message:
+    """
+    AIS CLass B Static Data part A (PGN 129809)
+
+    :param message_id: Message Type ID according to https://www.itu.int/rec/R-REC-M.1371
+    :param repeat: Repeat indicator. Used by the repeater to indicate how many times a message has been repeated.
+        0-3; 0 = default; 3 = do not repeat anymore
+    :param user_id: MMSI Number
+    :param name: Name of the vessel\n
+        Maximum 20 * 6bit ASCII characters.\n
+        For SAR aircraft it should be set to "SAR AIRCRAFT NNNNNNN" where NNNNNNN" equals the aircraft registration number.
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.AISClassBStaticDataPartA
+    msg.priority = 6
+    msg.add_byte_uint((repeat & 0x03) << 6 | (message_id & 0x3f))
+    msg.add_4_byte_uint(user_id)
+    msg.add_str(name, 20)
+
+    return msg
+
+
+class AISClassBStaticDataPartA(NamedTuple):
+    message_id: int
+    repeat: N2kAISRepeat
+    user_id: int
+    name: str
+
+
+def parse_n2k_ais_class_b_static_data_part_a(msg: Message) -> AISClassBStaticDataPartA:
+    index = IntRef(0)
+    vb = msg.get_byte_uint(index)
+    message_id = vb & 0x3f
+    repeat = N2kAISRepeat((vb >> 6) & 0x03)
+
+    return AISClassBStaticDataPartA(
+        message_id=message_id,
+        repeat=repeat,
+        user_id=msg.get_4_byte_uint(index),
+        name=msg.get_str(20, index),
+    )
 
 
 # AIS static data class B part B (PGN 129810)
