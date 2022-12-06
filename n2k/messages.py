@@ -2513,11 +2513,11 @@ def parse_n2k_gnss_satellites_in_view(msg: Message) -> GNSSSatellitesInView:
 
 
 # AIS Class A Static Data (PGN 129794)
-def set_n2k_ais_class_a_static(message_id: int, repeat: N2kAISRepeat, user_id: int, imo_number: int, callsign: str,
-                               name: str, vessel_type: int, length: float, beam: float, pos_ref_stbd: float,
-                               pos_ref_bow: float, eta_date: int, eta_time: float, draught: float, destination: str,
-                               ais_version: N2kAISVersion, gnss_type: N2kGNSSType, dte: N2kAISDTE,
-                               ais_info: N2kAISTransceiverInformation) -> Message:
+def set_n2k_ais_class_a_static_data(message_id: int, repeat: N2kAISRepeat, user_id: int, imo_number: int, callsign: str,
+                                    name: str, vessel_type: int, length: float, beam: float, pos_ref_stbd: float,
+                                    pos_ref_bow: float, eta_date: int, eta_time: float, draught: float, destination: str,
+                                    ais_version: N2kAISVersion, gnss_type: N2kGNSSType, dte: N2kAISDTE,
+                                    ais_info: N2kAISTransceiverInformation) -> Message:
     """
     AIS Class A Static Data (PGN 129794)
 
@@ -2598,7 +2598,7 @@ class AISClassAStaticData(NamedTuple):
     ais_info: N2kAISTransceiverInformation
 
 
-def parse_n2k_ais_class_a_static(msg: Message) -> AISClassAStaticData:
+def parse_n2k_ais_class_a_static_data(msg: Message) -> AISClassAStaticData:
     index = IntRef(0)
     vb = msg.get_byte_uint(index)
     message_id = vb & 0x3f
