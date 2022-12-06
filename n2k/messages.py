@@ -2203,8 +2203,8 @@ def set_n2k_navigation_info(sid: int, distance_to_waypoint: float, bearing_refer
     :param perpendicular_crossed: Perpendicular Crossed
     :param arrival_circle_entered: Arrival Circle Entered
     :param calculation_type: Calculation Type, see type
-    :param eta_time: Estimated Time at Arrival in seconds since midnight
-    :param eta_date: Days since 1.1.1970 UTC
+    :param eta_time: Time part of Estimated Time at Arrival in seconds since midnight
+    :param eta_date: Date part of Estimated Time at Arrival in Days since 1.1.1970 UTC
     :param bearing_origin_to_destination_waypoint: Bearing, From Origin to Destination Waypoint
     :param bearing_position_to_destination_waypoint: Bearing, From current Position to Destination Waypoint
     :param origin_waypoint_number: Origin Waypoint Number
@@ -2512,8 +2512,137 @@ def parse_n2k_gnss_satellites_in_view(msg: Message) -> GNSSSatellitesInView:
     )
 
 
-# AIS static data class A (PGN 129794)
-# TODO
+# AIS Class A Static Data (PGN 129794)
+def set_n2k_ais_class_a_static(message_id: int, repeat: N2kAISRepeat, user_id: int, imo_number: int, callsign: str,
+                               name: str, vessel_type: int, length: float, beam: float, pos_ref_stbd: float,
+                               pos_ref_bow: float, eta_date: int, eta_time: float, draught: float, destination: str,
+                               ais_version: N2kAISVersion, gnss_type: N2kGNSSType, dte: N2kAISDTE,
+                               ais_info: N2kAISTransceiverInformation) -> Message:
+    """
+    AIS Class A Static Data (PGN 129794)
+
+    :param message_id: Message Type ID according to https://www.itu.int/rec/R-REC-M.1371
+    :param repeat: Repeat indicator. Used by the repeater to indicate how many times a message has been repeated.
+        0-3; 0 = default; 3 = do not repeat anymore
+    :param user_id: MMSI Number
+    :param imo_number: Ship identification number by IMO. [1 .. 999999999]; 0: not available = default
+    :param callsign: Call Sign. 7 * 6bit ASCII characters
+    :param name: Name of the vessel\n
+        Maximum 20 * 6bit ASCII characters.\n
+        For SAR aircraft it should be set to "SAR AIRCRAFT NNNNNNN" where NNNNNNN" equals the aircraft registration number.
+    :param vessel_type: Vessek Type.\n
+        0: not available or no ship = default\n
+        1-99: as defined in § 3.3.2\n
+        100-199: reserved, for regional use\n
+        200-255: reserved, for regional use\n
+        Not applicable to SAR aircraft
+    :param length: Length/Diameter in meters
+    :param beam: Beam/Diameter in meters
+    :param pos_ref_stbd: Position Reference Point from Starboard
+    :param pos_ref_bow: Position Reference Point from the Bow
+    :param eta_date: Date part of Estimated Time at Arrival in Days since 1.1.1970 UTC
+    :param eta_time: Time part of Estimated Time at Arrival in seconds since midnight
+    :param draught: Maximum present static draught
+    :param destination: Destination. Maximum of 20 6bit ASCII Characters
+    :param ais_version: AIS Version, see type
+    :param gnss_type: Type of GNSS, see type
+    :param dte: Data terminal equipment (DTE) ready.\n
+        - 0: available
+        - 1: not available = default
+    :param ais_info: AIS Transceiver Information, see type
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.AISClassAStaticData
+    msg.priority = 6
+    msg.add_byte_uint((repeat & 0x03) << 6 | (message_id & 0x3f))
+    msg.add_4_byte_uint(user_id)
+    msg.add_4_byte_uint(imo_number)
+    msg.add_str(callsign, 7)
+    msg.add_str(name, 20)
+    msg.add_byte_uint(vessel_type)
+    msg.add_2_byte_double(length, 0.1)
+    msg.add_2_byte_double(beam, 0.1)
+    msg.add_2_byte_double(pos_ref_stbd, 0.1)
+    msg.add_2_byte_double(pos_ref_bow, 0.1)
+    msg.add_2_byte_uint(eta_date)
+    msg.add_4_byte_udouble(eta_time, 1e-4)
+    msg.add_2_byte_double(draught, 0.01)
+    msg.add_str(destination, 20)
+    msg.add_byte_uint((dte & 0x01) << 6 | (gnss_type & 0x0f) << 2 | (ais_version & 0x03))
+    msg.add_byte_uint(0xe0 | (ais_info & 0x1f))
+    msg.add_byte_uint(0xff)
+
+    return msg
+
+
+class AISClassAStaticData(NamedTuple):
+    message_id: int
+    repeat: N2kAISRepeat
+    user_id: int
+    imo_number: int
+    callsign: str
+    name: str
+    vessel_type: int
+    length: float
+    beam: float
+    pos_ref_stbd: float
+    pos_ref_bow: float
+    eta_date: int
+    eta_time: float
+    draught: float
+    destination: str
+    ais_version: N2kAISVersion
+    gnss_type: N2kGNSSType
+    dte: N2kAISDTE
+    ais_info: N2kAISTransceiverInformation
+
+
+def parse_n2k_ais_class_a_static(msg: Message) -> AISClassAStaticData:
+    index = IntRef(0)
+    vb = msg.get_byte_uint(index)
+    message_id = vb & 0x3f
+    repeat = N2kAISRepeat((vb >> 6) & 0x03)
+    user_id = msg.get_4_byte_uint(index)
+    imo_number = msg.get_4_byte_uint(index)
+    callsign = msg.get_str(7, index)
+    name = msg.get_str(20, index)
+    vessel_type = msg.get_byte_uint(index)
+    length = msg.get_2_byte_double(0.1, index)
+    beam = msg.get_2_byte_double(0.1, index)
+    pos_ref_stbd = msg.get_2_byte_double(0.1, index)
+    pos_ref_bow = msg.get_2_byte_double(0.1, index)
+    eta_date = msg.get_2_byte_uint(index)
+    eta_time = msg.get_4_byte_udouble(1e-4, index)
+    draught = msg.get_2_byte_double(0.01, index)
+    destination = msg.get_str(20, index)
+    vb = msg.get_byte_uint(index)
+    ais_version = N2kAISVersion(vb & 0x03)
+    gnss_type = N2kGNSSType((vb >> 2) & 0x0f)
+    dte = N2kAISDTE((vb >> 6) & 0x1f)
+    ais_info = N2kAISTransceiverInformation(msg.get_byte_uint(index) & 0x1f)
+
+    return AISClassAStaticData(
+        message_id=message_id,
+        repeat=repeat,
+        user_id=user_id,
+        imo_number=imo_number,
+        callsign=callsign,
+        name=name,
+        vessel_type=vessel_type,
+        length=length,
+        beam=beam,
+        pos_ref_stbd=pos_ref_stbd,
+        pos_ref_bow=pos_ref_bow,
+        eta_date=eta_date,
+        eta_time=eta_time,
+        draught=draught,
+        destination=destination,
+        ais_version=ais_version,
+        gnss_type=gnss_type,
+        dte=dte,
+        ais_info=ais_info,
+    )
 
 
 # AIS static data class B part A (PGN 129809)
