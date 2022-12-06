@@ -2690,8 +2690,83 @@ def parse_n2k_ais_class_b_static_data_part_a(msg: Message) -> AISClassBStaticDat
     )
 
 
-# AIS static data class B part B (PGN 129810)
-# TODO
+# AIS CLass B Static Data part B (PGN 129810)
+def set_n2k_ais_class_b_static_data_part_b(message_id: int, repeat: N2kAISRepeat, user_id: int, vessel_type: int,
+                                           vendor: str, callsign: str, length: float, beam: float, pos_ref_stbd: float,
+                                           pos_ref_bow: float, mothership_id: int) -> Message:
+    """
+    AIS CLass B Static Data part B (PGN 129810)
+
+    :param message_id: Message Type ID according to https://www.itu.int/rec/R-REC-M.1371
+    :param repeat: Repeat indicator. Used by the repeater to indicate how many times a message has been repeated.
+        0-3; 0 = default; 3 = do not repeat anymore
+    :param user_id: MMSI Number
+    :param vessel_type: Vessek Type.\n
+        0: not available or no ship = default\n
+        1-99: as defined in § 3.3.2\n
+        100-199: reserved, for regional use\n
+        200-255: reserved, for regional use\n
+        Not applicable to SAR aircraft
+    :param vendor: Unique identification of the Unit by a number as defined by the manufacturer
+    :param callsign: Call Sign. 7 * 6bit ASCII characters
+    :param length: Length/Diameter in meters
+    :param beam: Beam/Diameter in meters
+    :param pos_ref_stbd: Position Reference Point from Starboard
+    :param pos_ref_bow: Position Reference Point from the Bow
+    :param mothership_id: MMSI of the mothership
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.AISClassBStaticDataPartB
+    msg.priority = 6
+    msg.add_byte_uint((repeat & 0x03) << 6 | (message_id & 0x3f))
+    msg.add_4_byte_uint(user_id)
+    msg.add_byte_uint(vessel_type)
+    msg.add_str(vendor, 7)
+    msg.add_str(callsign, 7)
+    msg.add_2_byte_udouble(length, 0.1)
+    msg.add_2_byte_udouble(beam, 0.1)
+    msg.add_2_byte_udouble(pos_ref_stbd, 0.1)
+    msg.add_2_byte_udouble(pos_ref_bow, 0.1)
+    msg.add_4_byte_uint(mothership_id)
+    msg.add_byte_uint(0xff)  # Reserved
+
+    return msg
+
+
+class AISClassBStaticDataPartB(NamedTuple):
+    message_id: int
+    repeat: N2kAISRepeat
+    user_id: int
+    vessel_type: int
+    vendor: str
+    callsign: str
+    length: float
+    beam: float
+    pos_ref_stbd: float
+    pos_ref_bow: float
+    mothership_id: int
+
+
+def parse_n2k_ais_class_b_static_data_part_b(msg: Message) -> AISClassBStaticDataPartB:
+    index = IntRef(0)
+    vb = msg.get_byte_uint(index)
+    message_id = vb & 0x3f
+    repeat = N2kAISRepeat((vb >> 6) & 0x03)
+
+    return AISClassBStaticDataPartB(
+        message_id=message_id,
+        repeat=repeat,
+        user_id=msg.get_4_byte_uint(index),
+        vessel_type=msg.get_byte_uint(index),
+        vendor=msg.get_str(7, index),
+        callsign = msg.get_str(7, index),
+        length = msg.get_2_byte_udouble(0.1, index),
+        beam = msg.get_2_byte_udouble(0.1, index),
+        pos_ref_stbd = msg.get_2_byte_udouble(0.1, index),
+        pos_ref_bow = msg.get_2_byte_udouble(0.1, index),
+        mothership_id = msg.get_4_byte_uint(index),
+    )
 
 
 # Waypoint list (PGN 130074)
