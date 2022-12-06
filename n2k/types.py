@@ -243,15 +243,6 @@ class N2kAISVersion(IntEnum):
     ITU_R_M_1371_3 = 1
                           
 
-class N2kAISTranceiverInfo(IntEnum):
-    Channel_A_VDL_reception = 0
-    Channel_B_VDL_reception = 1
-    Channel_A_VDL_transmission = 2
-    Channel_B_VDL_transmission = 3
-    Own_information_not_broadcast = 4
-    Reserved = 5
-                          
-
 class N2kAISNavStatus(IntEnum):
     Under_Way_Motoring = 0
     At_Anchor = 1
@@ -280,14 +271,15 @@ class N2kAISUnit(IntEnum):
 class N2kAISMode(IntEnum):
     Autonomous = 0
     Assigned = 1
-                          
+
 
 class N2kAISTransceiverInformation(IntEnum):
-    A_VDL_reception = 0
-    B_VDL_reception = 1
-    A_VDL_transmission = 2
-    B_VDL_transmission = 3
-    information_not_broadcast = 4
+    Channel_A_VDL_reception = 0
+    Channel_B_VDL_reception = 1
+    Channel_A_VDL_transmission = 2
+    Channel_B_VDL_transmission = 3
+    Own_information_not_broadcast = 4
+    Reserved = 5
 
 
 class N2kMagneticVariation(IntEnum):
