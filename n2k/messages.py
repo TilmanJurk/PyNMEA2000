@@ -2329,7 +2329,7 @@ def set_n2k_route_waypoint_information(start: int, database: int, route: int, na
     msg.add_byte_uint(0xff)  # Reserved
     for waypoint in waypoints:
         msg.add_2_byte_uint(waypoint.id)
-        msg.add_var_str(waypoint.name)
+        msg.add_var_str(waypoint.name)  # TODO: How is it, that empty string is treated differently here from 130074?
         msg.add_4_byte_double(waypoint.latitude, 1e-7)
         msg.add_4_byte_double(waypoint.longitude, 1e-7)
 
@@ -2770,7 +2770,77 @@ def parse_n2k_ais_class_b_static_data_part_b(msg: Message) -> AISClassBStaticDat
 
 
 # Waypoint list (PGN 130074)
-# TODO
+def set_n2k_waypoint_list(start: int, num_waypoints: int, database: int, waypoints: List[Waypoint]) -> Message:
+    """
+    Route and Waypoint Service - Waypoint List - Waypoint Name & Position (PGN 130074)
+
+    :param start: The ID of the first waypoint
+    :param num_waypoints: Number of valid Wa
+    :param database: Database ID
+    :param waypoints: List of waypoints to be sent with the route.
+        Each consisting of an ID, Name, Latitude and Longitude.
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.RouteAndWaypointServiceWPListWPNameAndPosition
+    msg.priority = 7
+
+    available_data_len = msg.max_data_len - 10  # Length of space not taken up by list metadata
+    base_waypoint_len = 2 + 4 + 4 + 2  # ID, Latitude, Longitude, 2 bytes per varchar string
+    for i, waypoint in enumerate(waypoints):
+        available_data_len -= base_waypoint_len + len(waypoint.name or "\x00")
+        if available_data_len < 0:
+            raise ValueError("Buffer size exceeded, only the first {:d} waypoints fit in the data buffer".format(i))
+
+    msg.add_2_byte_uint(start)
+    msg.add_2_byte_uint(len(waypoints))
+    msg.add_2_byte_uint(num_waypoints)
+    msg.add_2_byte_uint(database)
+    msg.add_byte_uint(0xff)  # Reserved
+    msg.add_byte_uint(0xff)  # Reserved
+
+    for waypoint in waypoints:
+        msg.add_2_byte_uint(waypoint.id)
+        msg.add_var_str(waypoint.name or "\x00")  # Instead of empty string, add a var string containing a null-byte
+        msg.add_4_byte_double(waypoint.latitude, 1e-7)
+        msg.add_4_byte_double(waypoint.longitude, 1e-7)
+
+    return msg
+
+
+class WaypointList(NamedTuple):
+    start: int
+    num_waypoints: int
+    database: int
+    waypoints: List[Waypoint]
+
+
+def parse_n2k_waypoint_list(msg: Message) -> WaypointList:
+    index = IntRef(0)
+    start = msg.get_2_byte_uint(index)
+    waypoints_len = msg.get_2_byte_uint(index)
+    num_waypoints = msg.get_2_byte_uint(index)
+    database = msg.get_2_byte_uint(index)
+    msg.get_byte_uint(index)  # Reserved
+    msg.get_byte_uint(index)  # Reserved
+    waypoints = []
+    while index.value < msg.data_len:
+        waypoints.append(
+            Waypoint(
+                id=msg.get_2_byte_uint(index),
+                name=msg.get_var_str(index),
+                latitude=msg.get_4_byte_double(1e-7, index),
+                longitude=msg.get_4_byte_double(1e-7, index),
+            )
+        )
+    assert len(waypoints) == waypoints_len
+
+    return WaypointList(
+        start=start,
+        num_waypoints=num_waypoints,
+        database=database,
+        waypoints=waypoints,
+    )
 
 
 # Wind Speed (PGN 130306)
