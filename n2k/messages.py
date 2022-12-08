@@ -449,6 +449,47 @@ def parse_n2k_rate_of_turn(msg: Message) -> RateOfTurn:
     )
 
 
+# Heave (PGN 127252)
+def set_n2k_heave(sid: int, heave: float, delay: float, delay_source: N2kDelaySource) -> Message:
+    """
+    Heave (PGN 127252)
+
+    :param sid: Sequence ID. If your device provides e.g. boat speed and heading at same time, you can set the same SID
+        different messages to indicate that they are measured at same time
+    :param heave: Vertical displacement perpendicular to the earth’s surface in meters
+    :param delay: Delay added by calculations in seconds
+    :param delay_source: Delay Source, see type
+    :return: NMEA2000 Message, ready to be sent
+    """
+    msg = Message()
+    msg.pgn = PGN.Heave
+    msg.priority = 3
+    msg.add_byte_uint(sid)
+    msg.add_2_byte_double(heave, 0.01)
+    msg.add_2_byte_udouble(delay, 0.01)
+    msg.add_byte_uint(0xf0 | (delay_source & 0x0f))
+    msg.add_2_byte_uint(N2K_UINT16_NA)
+
+    return msg
+
+
+class Heave(NamedTuple):
+    sid: int
+    heave: float
+    delay: float
+    delay_source: N2kDelaySource
+
+
+def parse_n2k_heave(msg: Message) -> Heave:
+    index = IntRef(0)
+    return Heave(
+        sid=msg.get_byte_uint(index),
+        heave=msg.get_2_byte_double(0.01, index),
+        delay=msg.get_2_byte_udouble(0.01, index),
+        delay_source=N2kDelaySource(msg.get_byte_uint(index) & 0x0f),
+    )
+
+
 # Attitude (PGN 127257)
 def set_n2k_attitude(sid: int, yaw: float, pitch: float, roll: float) -> Message:
     """

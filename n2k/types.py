@@ -398,6 +398,7 @@ N2kDataMode = n2k.nmea2000_std_types.N2kDD025
 N2kRangeResidualMode = n2k.nmea2000_std_types.N2kDD072
 N2kPRNUsageStatus = n2k.nmea2000_std_types.N2kDD124
 N2kAISAtoNType = n2k.nmea2000_std_types.N2kDD305
+N2kDelaySource = n2k.nmea2000_std_types.N2kDD374
 N2kThrusterMotorEvents = n2k.nmea2000_std_types.N2kDD471
 N2kThrusterDirectionControl = n2k.nmea2000_std_types.N2kDD473
 N2kThrusterRetraction = n2k.nmea2000_std_types.N2kDD474

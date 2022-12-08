@@ -207,6 +207,15 @@ class N2kDD305(IntEnum):
     light_vessel_lanby_rigs = 31
 
 
+class N2kDD374(IntEnum):
+    user_defined = 0
+    minimum_defined = 1
+    factory_default = 2
+    maximum_supported = 3
+    out_of_range = 14
+    data_not_available = 15
+
+
 # Thruster Motor Events
 class N2kDD471(IntEnum):
     motor_over_temperature_cutout: int = 0

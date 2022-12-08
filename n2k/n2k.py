@@ -28,6 +28,7 @@ class PGN(IntEnum):
     Rudder = 127245  # prio: 2, period: 100
     VesselHeading = 127250  # prio: 2, period: 100
     RateOfTurn = 127251  # prio: 2, period: 100
+    Heave = 127252  # prio: 3, period: 100
     Attitude = 127257  # prio: 3, period: 1000
     EngineParametersRapid = 127488  # prio: 2, period: 100, rapid update
     TransmissionParameters = 127493  # prio: 2, period: 100, dynamic
