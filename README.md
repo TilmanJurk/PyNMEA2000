@@ -11,4 +11,4 @@ This library is still in an alpha state and is currently missing support for the
 - good documentation. For now only the expected values for the messages are documented
 
 The interface for creating messages will likely change in the future.
-There is currently no pypi package, thus the library needs to be installed manually.
+There is currently no pypi package, thus the library needs to be installed manually using `python setup.py build && python setup.py install`
