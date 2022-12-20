@@ -2039,7 +2039,7 @@ def set_n2k_ais_aids_to_navigation_report(
         assigned_mode_flag: bool = False,
         gnss_type: N2kGNSSType = N2kGNSSType.GPS,
         a_to_n_status: int = N2K_UINT8_NA,
-        n2k_ais_transceiver_information: N2kAISTransceiverInformation = N2kAISTransceiverInformation.A_VDL_reception,
+        n2k_ais_transceiver_information: N2kAISTransceiverInformation = N2kAISTransceiverInformation.Channel_A_VDL_reception,
         a_to_n_name: str = "",
     ) -> Message:
     """
